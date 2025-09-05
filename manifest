@@ -1,0 +1,18 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjEzMjAyODMsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhCQWI1OUI3NDNkQjZkMDY3OUExNmY1YjMxMjczMDkzMTU5ZTM2OGU0In0",
+    "payload": "eyJkb21haW4iOiJ3ZWIzLW9uYm9hcmRlci1kZW1vLnZlcmNlbC5hcHAifQ",
+    "signature": "MHg3ZmI4ZWVhYTUwN2MwYmFkYjJkZmYxMjljZTRhZTNhZDE4ODAyNGJjZjY1ZjZmMmZhMGZiOGVhNWFjNjBhMjBmNGIwOTdhYWE5MGQ2ODJkMTQxMmZiZDIyZjMxZGI5ZWUzZDU3NWExZDM4Y2ExZmVmOTA2ZDJmYjg0ODcyMWU4NjFi"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Web3 Onboarder",
+    "iconUrl": "https://web3-onboarder-demo.vercel.app/icon.png",
+    "homeUrl": "https://web3-onboarder-demo.vercel.app",
+    "imageUrl": "https://web3-onboarder-demo.vercel.app/hero.png",
+    "buttonTitle": "Start Your Web3 Journey",
+    "splashImageUrl": "https://web3-onboarder-demo.vercel.app/splash.png",
+    "splashBackgroundColor": "#4f46e5",
+    "webhookUrl": "https://web3-onboarder-demo.vercel.app/api/webhook"
+  }
+}
