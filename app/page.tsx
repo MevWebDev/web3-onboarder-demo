@@ -20,6 +20,7 @@ import {
 } from "@coinbase/onchainkit/wallet";
 import { useEffect, useMemo, useCallback } from "react";
 import { Button, Icon, Card } from "./components/DemoComponents";
+import { UserButton } from "@civic/auth/react";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -81,6 +82,7 @@ export default function App() {
                 <Icon name="star" size="lg" className="text-white" />
               </div>
               <div>
+                <UserButton />
                 <h2 className="text-xl font-bold text-[var(--app-foreground)] mb-2">
                   Welcome to Web3
                 </h2>
