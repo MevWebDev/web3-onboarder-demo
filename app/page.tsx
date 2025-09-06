@@ -1,29 +1,19 @@
-"use client";
+'use client';
 
-import {
-  useMiniKit,
-  useAddFrame,
-  useOpenUrl,
-} from "@coinbase/onchainkit/minikit";
-import {
-  Name,
-  Identity,
-  Address,
-  Avatar,
-  EthBalance,
-} from "@coinbase/onchainkit/identity";
+import { useMiniKit, useAddFrame, useOpenUrl } from '@coinbase/onchainkit/minikit';
+import { Name, Identity, Address, Avatar, EthBalance } from '@coinbase/onchainkit/identity';
 
-import { useAccount } from "wagmi";
+import { useAccount } from 'wagmi';
 import {
   ConnectWallet,
   Wallet,
   WalletDropdown,
   WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
-import { useEffect, useMemo, useCallback, useState } from "react";
-import { Button, Icon, Card } from "./components/DemoComponents";
-import CryptoOnboardingFlow from "./components/CryptoOnboardingFlow";
-import { VideoCallComponent } from "./components/VideoCallComponent";
+} from '@coinbase/onchainkit/wallet';
+import { useEffect, useMemo, useCallback, useState } from 'react';
+import { Button, Icon, Card } from './components/DemoComponents';
+import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
+// import { VideoCallComponent } from './components/VideoCallComponent';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -68,12 +58,8 @@ export default function App() {
               <span className="text-white font-bold text-sm">📞</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-[var(--app-foreground)]">
-                Wallet Phone
-              </h1>
-              <p className="text-xs text-[var(--app-foreground-muted)]">
-                Call any wallet directly
-              </p>
+              <h1 className="text-lg font-bold text-[var(--app-foreground)]">Wallet Phone</h1>
+              <p className="text-xs text-[var(--app-foreground-muted)]">Call any wallet directly</p>
             </div>
           </div>
           <div>{saveFrameButton}</div>
@@ -90,11 +76,11 @@ export default function App() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-[var(--app-foreground)] mb-2">
-                      Welcome to Wallet Phone! 
+                      Welcome to Wallet Phone!
                     </h2>
                     <p className="text-[var(--app-foreground-muted)] text-sm leading-relaxed">
-                      First, let's find you the perfect crypto mentor to guide your journey.
-                      After that, you'll be able to make wallet-to-wallet video calls.
+                      First, let's find you the perfect crypto mentor to guide your journey. After
+                      that, you'll be able to make wallet-to-wallet video calls.
                     </p>
                   </div>
                 </div>
@@ -127,7 +113,7 @@ export default function App() {
 
               {/* Crypto Onboarding Flow */}
               <Card title="Step 2: Find Your Mentor">
-                <CryptoOnboardingFlow 
+                <CryptoOnboardingFlow
                   walletAddress={address}
                   isConnected={isConnected}
                   onComplete={() => setOnboardingComplete(true)}
@@ -147,8 +133,8 @@ export default function App() {
                       Wallet-to-Wallet Calling
                     </h2>
                     <p className="text-[var(--app-foreground-muted)] text-sm leading-relaxed">
-                      Make direct video calls to any wallet address. They'll receive
-                      a ringing notification and can accept or decline your call.
+                      Make direct video calls to any wallet address. They'll receive a ringing
+                      notification and can accept or decline your call.
                     </p>
 
                     {isConnected && address && (
@@ -161,8 +147,8 @@ export default function App() {
                         </p>
                       </div>
                     )}
-                    
-                    <button 
+
+                    <button
                       onClick={() => setOnboardingComplete(false)}
                       className="mt-3 text-sm text-[var(--app-accent)] hover:underline"
                     >
@@ -177,76 +163,75 @@ export default function App() {
                 <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg rounded-tl-lg z-10">
                   Make Calls
                 </div>
-                <VideoCallComponent />
+                {/* <VideoCallComponent /> */}
               </div>
 
               {/* How Calling Works */}
               <Card title="How Calling Works">
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400 mt-0.5">
-                    📞
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400 mt-0.5">
+                        📞
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-[var(--app-foreground)]">
+                          You Call Someone
+                        </span>
+                        <p className="text-xs text-[var(--app-foreground-muted)]">
+                          Enter their wallet address and click call
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-xs font-medium text-purple-600 dark:text-purple-400 mt-0.5">
+                        🔔
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-[var(--app-foreground)]">
+                          They Get Notification
+                        </span>
+                        <p className="text-xs text-[var(--app-foreground-muted)]">
+                          Their app shows incoming call with your address
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-xs font-medium text-green-600 dark:text-green-400 mt-0.5">
+                        ✅
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-[var(--app-foreground)]">
+                          Accept or Decline
+                        </span>
+                        <p className="text-xs text-[var(--app-foreground-muted)]">
+                          They choose to accept or decline your call
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-xs font-medium text-orange-600 dark:text-orange-400 mt-0.5">
+                        📹
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-[var(--app-foreground)]">
+                          Video Call Starts
+                        </span>
+                        <p className="text-xs text-[var(--app-foreground-muted)]">
+                          If accepted, you both join the video call
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-medium text-[var(--app-foreground)]">
-                      You Call Someone
-                    </span>
-                    <p className="text-xs text-[var(--app-foreground-muted)]">
-                      Enter their wallet address and click call
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-xs font-medium text-purple-600 dark:text-purple-400 mt-0.5">
-                    🔔
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-[var(--app-foreground)]">
-                      They Get Notification
-                    </span>
-                    <p className="text-xs text-[var(--app-foreground-muted)]">
-                      Their app shows incoming call with your address
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-xs font-medium text-green-600 dark:text-green-400 mt-0.5">
-                    ✅
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-[var(--app-foreground)]">
-                      Accept or Decline
-                    </span>
-                    <p className="text-xs text-[var(--app-foreground-muted)]">
-                      They choose to accept or decline your call
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-xs font-medium text-orange-600 dark:text-orange-400 mt-0.5">
-                    📹
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-[var(--app-foreground)]">
-                      Video Call Starts
-                    </span>
-                    <p className="text-xs text-[var(--app-foreground-muted)]">
-                      If accepted, you both join the video call
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                  <strong>Note:</strong> Both people need this app open to make
-                  and receive calls. It works like a phone - one person calls,
-                  the other answers!
-                </p>
-              </div>
-            </div>
-          </Card>
+                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                      <strong>Note:</strong> Both people need this app open to make and receive
+                      calls. It works like a phone - one person calls, the other answers!
+                    </p>
+                  </div>
+                </div>
+              </Card>
 
               {/* Features Grid */}
               <div className="grid grid-cols-2 gap-4">
@@ -259,9 +244,7 @@ export default function App() {
                       <h3 className="font-medium text-[var(--app-foreground)] text-sm">
                         Direct Calling
                       </h3>
-                      <p className="text-xs text-[var(--app-foreground-muted)]">
-                        Like a phone
-                      </p>
+                      <p className="text-xs text-[var(--app-foreground-muted)]">Like a phone</p>
                     </div>
                   </div>
                 </Card>
@@ -275,9 +258,7 @@ export default function App() {
                       <h3 className="font-medium text-[var(--app-foreground)] text-sm">
                         Ring & Answer
                       </h3>
-                      <p className="text-xs text-[var(--app-foreground-muted)]">
-                        Accept/decline
-                      </p>
+                      <p className="text-xs text-[var(--app-foreground-muted)]">Accept/decline</p>
                     </div>
                   </div>
                 </Card>
@@ -291,7 +272,7 @@ export default function App() {
             variant="ghost"
             size="sm"
             className="text-[var(--ock-text-foreground-muted)] text-xs"
-            onClick={() => openUrl("https://base.org/builders/minikit")}
+            onClick={() => openUrl('https://base.org/builders/minikit')}
           >
             Built on Base with MiniKit
           </Button>
