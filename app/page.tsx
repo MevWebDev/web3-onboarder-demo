@@ -22,7 +22,6 @@ import {
 } from "@coinbase/onchainkit/wallet";
 import { useEffect, useMemo, useCallback } from "react";
 import { Button, Icon, Card } from "./components/DemoComponents";
-import { VideoCallComponent } from "./components/VideoCallComponent";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -139,7 +138,6 @@ export default function App() {
             <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg rounded-tl-lg z-10">
               2. Make Calls
             </div>
-            <VideoCallComponent />
           </div>
 
           {/* How Calling Works */}
