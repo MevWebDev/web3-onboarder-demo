@@ -16,6 +16,12 @@ import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
 
 import Call from './components/Call';
 
+export interface stepProps {
+  welcome: string;
+  onboarding: string;
+  home: string;
+}
+
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const { address, isConnected } = useAccount();
@@ -23,7 +29,11 @@ export default function App() {
   const openUrl = useOpenUrl();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isMentor, setIsMentor] = useState(false);
-  const [step, setStep] = useState<'welcome' | 'onboarding' | 'home'>('welcome');
+  const [step, setStep] = useState<stepProps>({
+    welcome: 'welcome',
+    onboarding: 'onboarding',
+    home: 'home',
+  });
 
   useEffect(() => {
     if (!isFrameReady) {
