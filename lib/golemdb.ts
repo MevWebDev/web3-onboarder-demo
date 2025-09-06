@@ -71,7 +71,7 @@ export class GolemTranscriptionService {
 
     const creates: GolemBaseCreate[] = [{
       data: encodedData,
-      btl: 3, // 43200, // ~24 hours (43200 blocks * 2 seconds) - reasonable retention for transcriptions
+      btl: 300, // ~10 minutes for testing (use 43200 for production ~24 hours)
       stringAnnotations: [
         new Annotation("type", "transcription"),
         new Annotation("meetId", data.meetId),
