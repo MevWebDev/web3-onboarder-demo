@@ -201,6 +201,21 @@ export default function App() {
               </Button>
             </div>
           </Card>
+
+          {/* Development Tools */}
+          <Card title="Development Tools">
+            <div className="space-y-2">
+              <p className="text-sm text-[var(--app-foreground-muted)] mb-3">
+                Access development and testing features
+              </p>
+              <a 
+                href="/test" 
+                className="block w-full px-4 py-2 text-center bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm font-medium"
+              >
+                System Test Page
+              </a>
+            </div>
+          </Card>
         </main>
 
         <footer className="mt-6 pt-4 text-center">
