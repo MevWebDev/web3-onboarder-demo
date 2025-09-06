@@ -106,8 +106,17 @@ async function fetchTranscription(transcriptionUrl: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Get headers for signature verification
+    const signature = request.headers.get('x-signature');
+    const webhookId = request.headers.get('x-webhook-id');
+    const apiKey = request.headers.get('x-api-key');
+    
     console.log("\n=== STREAM.IO WEBHOOK RECEIVED ===");
+    console.log("Webhook ID:", webhookId);
+    console.log("API Key:", apiKey);
+    console.log("Signature:", signature ? "✅ Present" : "❌ Missing");
+    
+    const body = await request.json();
     console.log("Event Type:", body.type);
     console.log("Full Webhook Body:", JSON.stringify(body, null, 2));
     console.log("==================================\n");
@@ -141,32 +150,50 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Extract the actual call ID from the cid (format: "default:callId")
+      const callId = call_transcription.call_cid.split(":")[1] || call_transcription.call_cid;
+
+      // Import status update function
+      const { updateTranscriptionStatus } = await import("../../transcription-result/[callId]/route");
+
+      // Update status to fetching
+      updateTranscriptionStatus(callId, 'fetching');
+
       // Fetch the transcription from Stream's S3
       const transcriptionText = await fetchTranscription(call_transcription.url);
       
       if (!transcriptionText) {
+        updateTranscriptionStatus(callId, 'error');
         return NextResponse.json(
           { error: "Transcription is empty" },
           { status: 400 }
         );
       }
 
-      // Analyze the transcription with LLM
-      const analysis = await analyzeTranscription(transcriptionText);
-      
-      // Log the analysis result
-      console.log("Mentorship Analysis:", {
-        callId: call_transcription.call_cid,
-        ...analysis,
-      });
+      // Update status to analyzing
+      updateTranscriptionStatus(callId, 'analyzing');
 
-      // Store the result for retrieval
-      // Extract the actual call ID from the cid (format: "default:callId")
-      const callId = call_transcription.call_cid.split(":")[1] || call_transcription.call_cid;
-      
-      // Store in temporary storage (in production, use a database)
-      const { storeTranscriptionResult } = await import("../../transcription-result/[callId]/route");
-      storeTranscriptionResult(callId, analysis);
+      try {
+        // Analyze the transcription with LLM
+        const analysis = await analyzeTranscription(transcriptionText);
+        
+        // Log the analysis result
+        console.log("Mentorship Analysis:", {
+          callId: callId,
+          ...analysis,
+        });
+
+        // Store the result for retrieval (this also updates status to 'complete')
+        const { storeTranscriptionResult } = await import("../../transcription-result/[callId]/route");
+        storeTranscriptionResult(callId, analysis);
+      } catch (error) {
+        console.error("❌ Analysis failed for call:", callId, error);
+        updateTranscriptionStatus(callId, 'error');
+        return NextResponse.json(
+          { error: "Failed to analyze transcription", details: error },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({
         success: true,
