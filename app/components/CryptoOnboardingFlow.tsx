@@ -26,7 +26,7 @@ export default function CryptoOnboardingFlow({
 
   // If user is a mentor, show the Call component directly
   if (isMentor) {
-    return <Call />;
+    return <Call isMentor={isMentor} />;
   }
 
   const handleInterviewComplete = (generatedProfile: any) => {
