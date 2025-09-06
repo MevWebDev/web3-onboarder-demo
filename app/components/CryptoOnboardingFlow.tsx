@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import InterviewChat from './InterviewChat';
 import MentorMatches from './MentorMatches';
+import Call from './Call';
 import { logger } from '@/lib/logger/index';
 
 type FlowState = 'waiting' | 'interview' | 'matches' | 'complete';
@@ -11,11 +12,22 @@ interface CryptoOnboardingFlowProps {
   walletAddress?: string;
   isConnected?: boolean;
   onComplete?: () => void;
+  isMentor?: boolean;
 }
 
-export default function CryptoOnboardingFlow({ walletAddress, isConnected, onComplete }: CryptoOnboardingFlowProps) {
+export default function CryptoOnboardingFlow({
+  walletAddress,
+  isConnected,
+  onComplete,
+  isMentor,
+}: CryptoOnboardingFlowProps) {
   const [flowState, setFlowState] = useState<FlowState>('waiting');
   const [profile, setProfile] = useState<any>(null);
+
+  // If user is a mentor, show the Call component directly
+  if (isMentor) {
+    return <Call />;
+  }
 
   const handleInterviewComplete = (generatedProfile: any) => {
     logger.info('Interview completed', { profileId: generatedProfile.id });
@@ -49,7 +61,8 @@ export default function CryptoOnboardingFlow({ walletAddress, isConnected, onCom
             Let's Find Your Perfect Crypto Mentor! 🚀
           </h2>
           <p className="text-sm text-[var(--app-foreground-muted)]">
-            I'll ask you 5 quick questions to understand your crypto goals and match you with the best mentors.
+            I'll ask you 5 quick questions to understand your crypto goals and match you with the
+            best mentors.
           </p>
           {walletAddress && (
             <p className="text-xs text-[var(--app-foreground-muted)] mt-2">
@@ -57,11 +70,8 @@ export default function CryptoOnboardingFlow({ walletAddress, isConnected, onCom
             </p>
           )}
         </div>
-        
-        <InterviewChat 
-          walletAddress={walletAddress} 
-          onComplete={handleInterviewComplete}
-        />
+
+        <InterviewChat walletAddress={walletAddress} onComplete={handleInterviewComplete} />
       </div>
     );
   }
@@ -77,14 +87,14 @@ export default function CryptoOnboardingFlow({ walletAddress, isConnected, onCom
             Based on your responses, here are the mentors that best match your crypto journey.
           </p>
           <div className="flex gap-2 justify-center mt-2">
-            <button 
+            <button
               onClick={handleStartOver}
               className="text-sm text-[var(--app-accent)] hover:underline"
             >
               Start Over
             </button>
             <span className="text-sm text-[var(--app-foreground-muted)]">•</span>
-            <button 
+            <button
               onClick={handleCompleteOnboarding}
               className="text-sm text-[var(--app-accent)] hover:underline"
             >
@@ -92,9 +102,9 @@ export default function CryptoOnboardingFlow({ walletAddress, isConnected, onCom
             </button>
           </div>
         </div>
-        
+
         <MentorMatches profile={profile} />
-        
+
         <div className="mt-6 text-center">
           <button
             onClick={handleCompleteOnboarding}

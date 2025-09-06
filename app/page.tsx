@@ -13,6 +13,7 @@ import {
 import { useEffect, useMemo, useCallback, useState } from 'react';
 import { Button, Icon, Card } from './components/DemoComponents';
 import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
+
 // import { VideoCallComponent } from './components/VideoCallComponent';
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [isMentor, setIsMentor] = useState(false);
 
   useEffect(() => {
     if (!isFrameReady) {
@@ -74,6 +76,7 @@ export default function App() {
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center">
                     <span className="text-white text-2xl">🚀</span>
                   </div>
+
                   <div>
                     <h2 className="text-xl font-bold text-[var(--app-foreground)] mb-2">
                       Welcome to Wallet Phone!
@@ -113,10 +116,23 @@ export default function App() {
 
               {/* Crypto Onboarding Flow */}
               <Card title="Step 2: Find Your Mentor">
+                {isConnected && (
+                  <button
+                    onClick={() => {
+                      console.log('isMentor set to true');
+                      setIsMentor(true);
+                    }}
+                    className="m-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    I am a Mentor
+                  </button>
+                )}
+
                 <CryptoOnboardingFlow
                   walletAddress={address}
                   isConnected={isConnected}
                   onComplete={() => setOnboardingComplete(true)}
+                  isMentor={isMentor}
                 />
               </Card>
             </>
