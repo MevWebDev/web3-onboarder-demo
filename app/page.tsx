@@ -14,7 +14,7 @@ import { useEffect, useMemo, useCallback, useState } from 'react';
 import { Button, Icon, Card } from './components/DemoComponents';
 import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
 
-// import { VideoCallComponent } from './components/VideoCallComponent';
+import Call from './components/Call';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -179,7 +179,7 @@ export default function App() {
                 <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg rounded-tl-lg z-10">
                   Make Calls
                 </div>
-                {/* <VideoCallComponent /> */}
+                <Call />
               </div>
 
               {/* How Calling Works */}
