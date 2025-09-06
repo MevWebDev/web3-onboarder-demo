@@ -124,7 +124,7 @@ export default function App() {
             <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg rounded-tl-lg z-10">
               2. Start Calling
             </div>
-            {/* <VideoCallComponent /> */}
+            <VideoCallComponent />
           </div>
 
           {/* How It Works */}
