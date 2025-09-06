@@ -6,11 +6,11 @@
   },
   "frame": {
     "version": "1",
-    "name": "Coinbase Video Calls",
+    "name": "Web3 Onboarder",
     "iconUrl": "https://web3-onboarder-demo.vercel.app/icon.png",
     "homeUrl": "https://web3-onboarder-demo.vercel.app",
     "imageUrl": "https://web3-onboarder-demo.vercel.app/hero.png",
-    "buttonTitle": "Call with Coinbase Wallet",
+    "buttonTitle": "Start Your Web3 Journey",
     "splashImageUrl": "https://web3-onboarder-demo.vercel.app/splash.png",
     "splashBackgroundColor": "#4f46e5",
     "webhookUrl": "https://web3-onboarder-demo.vercel.app/api/webhook"

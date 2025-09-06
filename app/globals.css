@@ -23,6 +23,3 @@ body {
   font-style: normal;
   font-size: 80%;
 }
-
-/* GetStream Video SDK Styles */
-@import "@stream-io/video-react-sdk/dist/css/styles.css";
