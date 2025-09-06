@@ -71,7 +71,7 @@ export function Card({ title, children, className = '', onClick }: CardProps) {
 
   return (
     <div
-      className={`bg-[var(--app-card-bg)] backdrop-blur-md rounded-xl shadow-lg border border-[var(--app-card-border)] overflow-hidden transition-all hover:shadow-xl ${className} ${onClick ? 'cursor-pointer' : ''}`}
+      className={`${className} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
       onKeyDown={onClick ? handleKeyDown : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -82,7 +82,7 @@ export function Card({ title, children, className = '', onClick }: CardProps) {
           <h3 className="text-lg font-medium text-[var(--app-foreground)]">{title}</h3>
         </div>
       )}
-      <div className="p-5">{children}</div>
+      {children}
     </div>
   );
 }

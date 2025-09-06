@@ -12,22 +12,16 @@ interface CryptoOnboardingFlowProps {
   walletAddress?: string;
   isConnected?: boolean;
   onComplete?: () => void;
-  isMentor?: boolean;
 }
 
 export default function CryptoOnboardingFlow({
   walletAddress,
   isConnected,
   onComplete,
-  isMentor,
 }: CryptoOnboardingFlowProps) {
   const [flowState, setFlowState] = useState<FlowState>('waiting');
   const [profile, setProfile] = useState<any>(null);
-
-  // If user is a mentor, show the Call component directly
-  if (isMentor) {
-    return <Call />;
-  }
+  const [isMentor, setIsMentor] = useState<boolean>(false);
 
   const handleInterviewComplete = (generatedProfile: any) => {
     logger.info('Interview completed', { profileId: generatedProfile.id });
@@ -51,6 +45,10 @@ export default function CryptoOnboardingFlow({
     setFlowState('waiting');
     setProfile(null);
   };
+
+  if (isMentor) {
+    return <Call />;
+  }
 
   // Show different content based on flow state
   if (flowState === 'interview') {
@@ -130,12 +128,20 @@ export default function CryptoOnboardingFlow({
         <p className="text-sm text-[var(--app-foreground-muted)] mb-6">
           Let's start with a quick interview to understand your crypto goals
         </p>
-        <button
-          onClick={handleStartInterview}
-          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-xl transition-all"
-        >
-          Start Mentor Matching 🚀
-        </button>
+        <div className="flex flex-col items-center">
+          <button
+            onClick={handleStartInterview}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-xl transition-all"
+          >
+            Start Mentor Matching 🚀
+          </button>
+          <button
+            onClick={() => setIsMentor(true)}
+            className="m-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            I am a Mentor
+          </button>
+        </div>
       </div>
     );
   }

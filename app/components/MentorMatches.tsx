@@ -109,20 +109,6 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
     );
   }
 
-  if (activeCall) {
-    return (
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <Call />
-        <button
-          onClick={() => setActiveCall(false)}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-        >
-          End Call
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-white rounded-lg shadow-lg">
       <div className="p-6 border-b">
