@@ -13,6 +13,6 @@
     "buttonTitle": "Call with Coinbase Wallet",
     "splashImageUrl": "https://web3-onboarder-demo.vercel.app/splash.png",
     "splashBackgroundColor": "#4f46e5",
-    "webhookUrl": "https://web3-onboarder-demo.vercel.app/api/webhook"
+    "webhookUrl": "https://web3-onboarder-demo.vercel.app/api/webhooks/stream-transcription"
   }
 }
