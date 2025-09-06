@@ -10,9 +10,10 @@ type FlowState = 'waiting' | 'interview' | 'matches' | 'complete';
 interface CryptoOnboardingFlowProps {
   walletAddress?: string;
   isConnected?: boolean;
+  onComplete?: () => void;
 }
 
-export default function CryptoOnboardingFlow({ walletAddress, isConnected }: CryptoOnboardingFlowProps) {
+export default function CryptoOnboardingFlow({ walletAddress, isConnected, onComplete }: CryptoOnboardingFlowProps) {
   const [flowState, setFlowState] = useState<FlowState>('waiting');
   const [profile, setProfile] = useState<any>(null);
 
@@ -20,6 +21,13 @@ export default function CryptoOnboardingFlow({ walletAddress, isConnected }: Cry
     logger.info('Interview completed', { profileId: generatedProfile.id });
     setProfile(generatedProfile);
     setFlowState('matches');
+  };
+
+  const handleCompleteOnboarding = () => {
+    setFlowState('complete');
+    if (onComplete) {
+      onComplete();
+    }
   };
 
   const handleStartInterview = () => {
@@ -68,15 +76,33 @@ export default function CryptoOnboardingFlow({ walletAddress, isConnected }: Cry
           <p className="text-sm text-[var(--app-foreground-muted)]">
             Based on your responses, here are the mentors that best match your crypto journey.
           </p>
-          <button 
-            onClick={handleStartOver}
-            className="mt-2 text-sm text-[var(--app-accent)] hover:underline"
-          >
-            Start Over
-          </button>
+          <div className="flex gap-2 justify-center mt-2">
+            <button 
+              onClick={handleStartOver}
+              className="text-sm text-[var(--app-accent)] hover:underline"
+            >
+              Start Over
+            </button>
+            <span className="text-sm text-[var(--app-foreground-muted)]">•</span>
+            <button 
+              onClick={handleCompleteOnboarding}
+              className="text-sm text-[var(--app-accent)] hover:underline"
+            >
+              Continue to Video Calls →
+            </button>
+          </div>
         </div>
         
         <MentorMatches profile={profile} />
+        
+        <div className="mt-6 text-center">
+          <button
+            onClick={handleCompleteOnboarding}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-xl transition-all"
+          >
+            Continue to Video Calls 📞
+          </button>
+        </div>
       </div>
     );
   }
