@@ -91,6 +91,9 @@ export default function InterviewChat({ walletAddress, onComplete }: InterviewCh
       timestamp: new Date(),
     };
 
+    // Store the input before clearing it
+    const userInput = input;
+    
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -102,7 +105,7 @@ export default function InterviewChat({ walletAddress, onComplete }: InterviewCh
         body: JSON.stringify({
           sessionId,
           action: 'respond',
-          message: input,
+          message: userInput,
         }),
       });
 
@@ -291,7 +294,7 @@ export default function InterviewChat({ walletAddress, onComplete }: InterviewCh
             onChange={(e) => setInput(e.target.value)}
             placeholder={isComplete ? "Interview complete!" : "Type your response..."}
             disabled={isLoading || isComplete}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-black bg-white disabled:text-gray-600"
           />
           <button
             type="submit"

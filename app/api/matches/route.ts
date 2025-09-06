@@ -201,12 +201,12 @@ function calculateArchetypeAlignment(profile: CryptoNewcomerProfile, mentor: any
 
 function calculateInterestAlignment(profile: CryptoNewcomerProfile, mentor: any): number {
   const profileInterests = new Set([
-    ...profile.crypto_interests.primary_goals,
-    ...profile.crypto_interests.specific_interests,
-    ...profile.mentor_requirements.desired_expertise,
+    ...(profile.crypto_interests?.primary_goals || []),
+    ...(profile.crypto_interests?.specific_interests || []),
+    ...(profile.mentor_requirements?.desired_expertise || []),
   ]);
   
-  const mentorSpecializations = new Set(mentor.crypto_expertise.specializations);
+  const mentorSpecializations = new Set(mentor.crypto_expertise?.specializations || []);
   
   // Count overlapping interests
   const overlap = Array.from(profileInterests).filter(interest => 
@@ -220,8 +220,8 @@ function calculateInterestAlignment(profile: CryptoNewcomerProfile, mentor: any)
 }
 
 function calculateLearningStyleAlignment(profile: CryptoNewcomerProfile, mentor: any): number {
-  const profileStyle = profile.learning_preferences.communication_style;
-  const mentorStyle = mentor.mentoring_approach.communication_style;
+  const profileStyle = profile.learning_preferences?.communication_style || 'supportive';
+  const mentorStyle = mentor.mentoring_approach?.communication_style || 'supportive';
   
   // Style compatibility matrix
   const compatibility: { [key: string]: { [key: string]: number } } = {
@@ -236,8 +236,8 @@ function calculateLearningStyleAlignment(profile: CryptoNewcomerProfile, mentor:
 
 function calculateAvailabilityAlignment(profile: CryptoNewcomerProfile, mentor: any): number {
   // Simple timezone-based compatibility for now
-  const profileTz = profile.logistics.availability.timezone;
-  const mentorTz = mentor.availability.timezone;
+  const profileTz = profile.logistics?.availability?.timezone || 'UTC';
+  const mentorTz = mentor.availability?.timezone || 'UTC';
   
   if (profileTz === mentorTz) {
     return 1.0;

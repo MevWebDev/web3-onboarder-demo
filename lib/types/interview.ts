@@ -85,6 +85,23 @@ export const LogisticsSchema = z.object({
   duration_expectation: z.enum(['1_month', '3_months', '6_months', '1_year', 'ongoing']),
 });
 
+// Schema for AI generation (without auto-generated fields)
+export const CryptoNewcomerProfileGenerationSchema = z.object({
+  personal_info: z.object({
+    name: z.string(),
+    timezone: z.string(),
+  }),
+  
+  archetype_classification: ArchetypeClassificationSchema,
+  crypto_interests: CryptoInterestsSchema,
+  current_background: CurrentBackgroundSchema,
+  learning_preferences: LearningPreferencesSchema,
+  mentor_requirements: MentorRequirementsSchema,
+  logistics: LogisticsSchema,
+  
+  search_keywords: z.array(z.string()),
+});
+
 // Complete profile schema for crypto newcomers
 export const CryptoNewcomerProfileSchema = z.object({
   id: z.string(),
@@ -165,6 +182,7 @@ export const CryptoMentorProfileSchema = z.object({
 
 // Type exports
 export type CryptoNewcomerProfile = z.infer<typeof CryptoNewcomerProfileSchema>;
+export type CryptoNewcomerProfileGeneration = z.infer<typeof CryptoNewcomerProfileGenerationSchema>;
 export type CryptoMentorProfile = z.infer<typeof CryptoMentorProfileSchema>;
 export type ArchetypeClassification = z.infer<typeof ArchetypeClassificationSchema>;
 
