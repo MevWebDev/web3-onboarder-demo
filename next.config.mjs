@@ -1,4 +1,3 @@
-import { createCivicAuthPlugin } from "@civic/auth-web3/nextjs";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Silence warnings
@@ -9,8 +8,4 @@ const nextConfig = {
   },
 };
 
-const withCivicAuth = createCivicAuthPlugin({
-  clientId: "80ef9024-dc21-45a9-8aba-f9215d7de88d",
-});
-
-export default withCivicAuth(nextConfig);
+export default nextConfig;

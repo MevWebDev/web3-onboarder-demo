@@ -5,13 +5,26 @@ import {
   useAddFrame,
   useOpenUrl,
 } from "@coinbase/onchainkit/minikit";
+import {
+  Name,
+  Identity,
+  Address,
+  Avatar,
+  EthBalance,
+} from "@coinbase/onchainkit/identity";
+import {
+  ConnectWallet,
+  Wallet,
+  WalletDropdown,
+  WalletDropdownDisconnect,
+} from "@coinbase/onchainkit/wallet";
 import { useEffect, useMemo, useCallback } from "react";
 import { Button, Icon, Card } from "./components/DemoComponents";
-import { UserButton, useUser } from "@civic/auth-web3/react";
+import { VideoCallComponent } from "./components/VideoCallComponent";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
-  const { user } = useUser();
+
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
 
@@ -20,13 +33,6 @@ export default function App() {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
-
-  // Log user info when available
-  useEffect(() => {
-    if (user) {
-      console.log("Civic Auth user:", user);
-    }
-  }, [user]);
 
   const handleAddFrame = useCallback(async () => {
     await addFrame();
@@ -55,14 +61,14 @@ export default function App() {
         <header className="flex justify-between items-center mb-6 h-11">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">W3</span>
+              <span className="text-white font-bold text-sm">📹</span>
             </div>
             <div>
               <h1 className="text-lg font-bold text-[var(--app-foreground)]">
-                Web3 Onboarder
+                Coinbase Video Calls
               </h1>
               <p className="text-xs text-[var(--app-foreground-muted)]">
-                Your gateway to Web3
+                Call any wallet address
               </p>
             </div>
           </div>
@@ -77,33 +83,103 @@ export default function App() {
                 <Icon name="star" size="lg" className="text-white" />
               </div>
               <div>
-                {/* Civic Auth Integration */}
-                <div className="mb-4">
-                  <UserButton />
-                </div>
-
                 <h2 className="text-xl font-bold text-[var(--app-foreground)] mb-2">
-                  Welcome to Web3
+                  Coinbase Wallet Calls
                 </h2>
                 <p className="text-[var(--app-foreground-muted)] text-sm leading-relaxed">
-                  Start your decentralized journey with the easiest onboarding
-                  experience. Sign in with GitHub or X, create your embedded
-                  wallet, and explore Web3 on Base.
+                  Connect your Coinbase wallet and call any other wallet address
+                  directly. Your wallet address is your unique video call ID.
                 </p>
-
-                {user && (
-                  <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      Welcome back, {user.name || user.email || "User"}!
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </Card>
 
-          {/* Embedded Wallet Component */}
-          <UserButton />
+          {/* Wallet Connection - Priority */}
+          <Card title="1. Connect Coinbase Wallet">
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <Wallet className="z-10">
+                  <ConnectWallet className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-xl transition-all">
+                    <Name className="text-inherit" />
+                  </ConnectWallet>
+                  <WalletDropdown>
+                    <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+                      <Avatar />
+                      <Name />
+                      <Address />
+                      <EthBalance />
+                    </Identity>
+                    <WalletDropdownDisconnect />
+                  </WalletDropdown>
+                </Wallet>
+              </div>
+              <p className="text-center text-xs text-[var(--app-foreground-muted)]">
+                Your Coinbase wallet address becomes your unique video call ID
+              </p>
+            </div>
+          </Card>
+
+          {/* Video Call Component */}
+          <div className="relative">
+            <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg rounded-tl-lg z-10">
+              2. Start Calling
+            </div>
+            {/* <VideoCallComponent /> */}
+          </div>
+
+          {/* How It Works */}
+          <Card title="How It Works">
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400 mt-0.5">
+                    1
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-[var(--app-foreground)]">
+                      Connect Coinbase Wallet
+                    </span>
+                    <p className="text-xs text-[var(--app-foreground-muted)]">
+                      Your address becomes your video call ID
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-xs font-medium text-purple-600 dark:text-purple-400 mt-0.5">
+                    2
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-[var(--app-foreground)]">
+                      Enter Target Address
+                    </span>
+                    <p className="text-xs text-[var(--app-foreground-muted)]">
+                      Input any wallet address you want to call
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-xs font-medium text-green-600 dark:text-green-400 mt-0.5">
+                    3
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-[var(--app-foreground)]">
+                      Start Video Call
+                    </span>
+                    <p className="text-xs text-[var(--app-foreground-muted)]">
+                      Direct peer-to-peer video calling
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                  <strong>Note:</strong> Both parties need to have this app open
+                  with Coinbase wallets connected to make/receive calls.
+                </p>
+              </div>
+            </div>
+          </Card>
 
           {/* Features Grid */}
           <div className="grid grid-cols-2 gap-4">
@@ -117,10 +193,10 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="font-medium text-[var(--app-foreground)] text-sm">
-                    Secure
+                    Coinbase Native
                   </h3>
                   <p className="text-xs text-[var(--app-foreground-muted)]">
-                    Social + Wallet Auth
+                    Wallet-to-wallet
                   </p>
                 </div>
               </div>
@@ -136,56 +212,15 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="font-medium text-[var(--app-foreground)] text-sm">
-                    Easy
+                    HD Quality
                   </h3>
                   <p className="text-xs text-[var(--app-foreground-muted)]">
-                    Embedded Wallets
+                    Crystal clear
                   </p>
                 </div>
               </div>
             </Card>
           </div>
-
-          {/* Getting Started */}
-          <Card title="Getting Started">
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400">
-                    1
-                  </div>
-                  <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Sign in with GitHub or X above
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-xs font-medium text-purple-600 dark:text-purple-400">
-                    2
-                  </div>
-                  <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Create your embedded wallet
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-xs font-medium text-green-600 dark:text-green-400">
-                    3
-                  </div>
-                  <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Start transacting on Base
-                  </span>
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={() => openUrl("https://base.org/ecosystem")}
-                icon={<Icon name="arrow-right" size="sm" />}
-              >
-                Explore Base Ecosystem
-              </Button>
-            </div>
-          </Card>
         </main>
 
         <footer className="mt-6 pt-4 text-center">
