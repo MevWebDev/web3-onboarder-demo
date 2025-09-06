@@ -14,14 +14,14 @@ import { useEffect, useMemo, useCallback, useState } from 'react';
 import { Button, Icon, Card } from './components/DemoComponents';
 import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
 
-import Call from './components/Call';
-
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const { address, isConnected } = useAccount();
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
-  const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  // Use a single step state for flow
+  const [step, setStep] = useState<'welcome' | 'connect' | 'onboarding' | 'home'>('home');
   const [isMentor, setIsMentor] = useState(false);
 
   useEffect(() => {
@@ -54,233 +54,81 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       <div className="w-full max-w-md mx-auto px-4 py-3">
-        <header className="flex justify-between items-center mb-6 h-11">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">📞</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-[var(--app-foreground)]">Wallet Phone</h1>
-              <p className="text-xs text-[var(--app-foreground-muted)]">Call any wallet directly</p>
-            </div>
-          </div>
-          <div>{saveFrameButton}</div>
-        </header>
-
         <main className="flex-1 space-y-6">
-          {!onboardingComplete ? (
-            <>
-              {/* Onboarding Section */}
-              <Card className="text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
-                <div className="space-y-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center">
-                    <span className="text-white text-2xl">🚀</span>
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl font-bold text-[var(--app-foreground)] mb-2">
-                      Welcome to Wallet Phone!
-                    </h2>
-                    <p className="text-[var(--app-foreground-muted)] text-sm leading-relaxed">
-                      First, let's find you the perfect crypto mentor to guide your journey. After
-                      that, you'll be able to make wallet-to-wallet video calls.
-                    </p>
-                  </div>
+          {step === 'welcome' && (
+            <Card className="text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
+              <div className="space-y-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center">
+                  <span className="text-white text-2xl">🚀</span>
                 </div>
-              </Card>
-
-              {/* Wallet Connection - Priority */}
-              <Card title="Step 1: Connect Your Wallet">
-                <div className="space-y-4">
-                  <div className="flex justify-center">
-                    <Wallet className="z-10">
-                      <ConnectWallet className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-xl transition-all">
-                        <Name className="text-inherit" />
-                      </ConnectWallet>
-                      <WalletDropdown>
-                        <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-                          <Avatar />
-                          <Name />
-                          <Address />
-                          <EthBalance />
-                        </Identity>
-                        <WalletDropdownDisconnect />
-                      </WalletDropdown>
-                    </Wallet>
-                  </div>
-                  <p className="text-center text-xs text-[var(--app-foreground-muted)]">
-                    Your wallet address will be your unique identifier
+                <div>
+                  <h2 className="text-xl font-bold text-[var(--app-foreground)] mb-2">
+                    Welcome to Web3-Onboarder
+                  </h2>
+                  <p className="text-[var(--app-foreground-muted)] text-sm leading-relaxed">
+                    Find your perfect crypto mentor and make wallet-to-wallet video calls.
                   </p>
+                  <Button className="mt-4" onClick={() => setStep('connect')}>
+                    Get Started
+                  </Button>
                 </div>
-              </Card>
-
-              {/* Crypto Onboarding Flow */}
-              <Card title="Step 2: Find Your Mentor">
-                {isConnected && (
-                  <button
-                    onClick={() => {
-                      console.log('isMentor set to true');
-                      setIsMentor(true);
-                    }}
-                    className="m-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    I am a Mentor
-                  </button>
-                )}
-
-                <CryptoOnboardingFlow
-                  walletAddress={address}
-                  isConnected={isConnected}
-                  onComplete={() => setOnboardingComplete(true)}
-                  isMentor={isMentor}
-                />
-              </Card>
-            </>
-          ) : (
-            <>
-              {/* Hero Section */}
-              <Card className="text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
-                <div className="space-y-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center">
-                    <span className="text-white text-2xl">📞</span>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-[var(--app-foreground)] mb-2">
-                      Wallet-to-Wallet Calling
-                    </h2>
-                    <p className="text-[var(--app-foreground-muted)] text-sm leading-relaxed">
-                      Make direct video calls to any wallet address. They'll receive a ringing
-                      notification and can accept or decline your call.
-                    </p>
-
-                    {isConnected && address && (
-                      <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                        <p className="text-xs text-green-700 dark:text-green-300 font-medium">
-                          📞 Ready to make calls!
-                        </p>
-                        <p className="text-xs text-green-600 dark:text-green-400 font-mono">
-                          Your ID: {address.slice(0, 6)}...{address.slice(-4)}
-                        </p>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={() => setOnboardingComplete(false)}
-                      className="mt-3 text-sm text-[var(--app-accent)] hover:underline"
-                    >
-                      ← Back to Mentor Matching
-                    </button>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Video Call Component */}
-              <div className="relative">
-                <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg rounded-tl-lg z-10">
-                  Make Calls
-                </div>
-                <Call />
               </div>
-
-              {/* How Calling Works */}
-              <Card title="How Calling Works">
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400 mt-0.5">
-                        📞
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-[var(--app-foreground)]">
-                          You Call Someone
-                        </span>
-                        <p className="text-xs text-[var(--app-foreground-muted)]">
-                          Enter their wallet address and click call
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-xs font-medium text-purple-600 dark:text-purple-400 mt-0.5">
-                        🔔
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-[var(--app-foreground)]">
-                          They Get Notification
-                        </span>
-                        <p className="text-xs text-[var(--app-foreground-muted)]">
-                          Their app shows incoming call with your address
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-xs font-medium text-green-600 dark:text-green-400 mt-0.5">
-                        ✅
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-[var(--app-foreground)]">
-                          Accept or Decline
-                        </span>
-                        <p className="text-xs text-[var(--app-foreground-muted)]">
-                          They choose to accept or decline your call
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-xs font-medium text-orange-600 dark:text-orange-400 mt-0.5">
-                        📹
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-[var(--app-foreground)]">
-                          Video Call Starts
-                        </span>
-                        <p className="text-xs text-[var(--app-foreground-muted)]">
-                          If accepted, you both join the video call
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                      <strong>Note:</strong> Both people need this app open to make and receive
-                      calls. It works like a phone - one person calls, the other answers!
-                    </p>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Features Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="text-center">
-                  <div className="space-y-3">
-                    <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg mx-auto flex items-center justify-center">
-                      <span className="text-green-600 dark:text-green-400">📞</span>
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-[var(--app-foreground)] text-sm">
-                        Direct Calling
-                      </h3>
-                      <p className="text-xs text-[var(--app-foreground-muted)]">Like a phone</p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="text-center">
-                  <div className="space-y-3">
-                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg mx-auto flex items-center justify-center">
-                      <span className="text-blue-600 dark:text-blue-400">🔔</span>
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-[var(--app-foreground)] text-sm">
-                        Ring & Answer
-                      </h3>
-                      <p className="text-xs text-[var(--app-foreground-muted)]">Accept/decline</p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </>
+            </Card>
           )}
+
+          {step === 'connect' && (
+            <Card title="Step 1: Connect Your Wallet">
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <Wallet className="z-10">
+                    <ConnectWallet className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-xl transition-all">
+                      <Name className="text-inherit" />
+                    </ConnectWallet>
+                    <WalletDropdown>
+                      <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+                        <Avatar />
+                        <Name />
+                        <Address />
+                        <EthBalance />
+                      </Identity>
+                      <WalletDropdownDisconnect />
+                    </WalletDropdown>
+                  </Wallet>
+                </div>
+                <p className="text-center text-xs text-[var(--app-foreground-muted)]">
+                  Your wallet address will be your unique identifier
+                </p>
+                {isConnected && (
+                  <Button className="w-full" onClick={() => setStep('onboarding')}>
+                    Continue
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => setStep('welcome')}
+                >
+                  ← Back
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {step === 'onboarding' && (
+            <Card title="Step 2: Find Your Mentor">
+              <CryptoOnboardingFlow
+                walletAddress={address}
+                isConnected={isConnected}
+                onComplete={() => setStep('home')}
+              />
+              <Button variant="ghost" size="sm" className="mt-2" onClick={() => setStep('connect')}>
+                ← Back
+              </Button>
+            </Card>
+          )}
+
+          {step === 'home' && <Card>Home</Card>}
         </main>
 
         <footer className="mt-6 pt-4 text-center">
