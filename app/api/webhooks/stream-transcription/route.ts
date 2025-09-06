@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY!,
-});
+import { TranscriptionService } from "@/lib/transcription-service";
+import type { TranscriptionData, TranscriptionSegment as SupabaseSegment } from "@/types/supabase";
 
 interface TranscriptionSegment {
   text: string;
@@ -12,69 +9,11 @@ interface TranscriptionSegment {
   end_time: number;
 }
 
-interface MentorshipAnalysis {
-  decision: boolean;
-  reason: string;
-}
-
-async function analyzeTranscription(
-  transcriptionText: string
-): Promise<MentorshipAnalysis> {
-  try {
-    const systemMessage = `You are an AI assistant that analyzes mentor-mentee conversations to determine if the mentor was helpful.
-
-Analyze the following transcription and determine:
-1. Was the mentor helpful to the mentee? (true/false)
-2. Provide a brief reason (1-2 sentences) explaining your decision.
-
-Consider factors like:
-- Did the mentor provide clear guidance or answers?
-- Was the mentor engaged and responsive?
-- Did the mentor offer practical advice or solutions?
-- Was the conversation productive and on-topic?
-
-Return your analysis as a JSON object with:
-- decision: boolean (true if helpful, false if not)
-- reason: string (brief explanation)`;
-
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "anthropic/claude-3.5-sonnet",
-        messages: [
-          { role: "system", content: systemMessage },
-          { role: "user", content: `Transcription to analyze:\n\n${transcriptionText}` }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const analysis = JSON.parse(data.choices[0].message.content);
-    
-    return {
-      decision: analysis.decision,
-      reason: analysis.reason,
-    };
-  } catch (error) {
-    console.error("Error analyzing transcription:", error);
-    return {
-      decision: false,
-      reason: "Failed to analyze transcription due to an error",
-    };
-  }
-}
-
-async function fetchTranscription(transcriptionUrl: string): Promise<string> {
+async function fetchTranscription(transcriptionUrl: string): Promise<{ 
+  formattedText: string; 
+  segments: SupabaseSegment[];
+  wordCount: number;
+}> {
   try {
     const response = await fetch(transcriptionUrl);
     if (!response.ok) {
@@ -84,20 +23,39 @@ async function fetchTranscription(transcriptionUrl: string): Promise<string> {
     const jsonlData = await response.text();
     const lines = jsonlData.trim().split("\n");
     
-    // Parse JSONL and format as readable text
+    // Parse JSONL and format as readable text + structured data
     let formattedTranscription = "";
+    const segments: SupabaseSegment[] = [];
+    let wordCount = 0;
+    
     for (const line of lines) {
       if (line) {
         try {
           const segment: TranscriptionSegment = JSON.parse(line);
           formattedTranscription += `${segment.speaker}: ${segment.text}\n`;
+          
+          // Convert to Supabase segment format
+          segments.push({
+            start_time: segment.start_time.toString(),
+            end_time: segment.end_time.toString(),
+            speaker_id: segment.speaker,
+            text: segment.text,
+            confidence: 1.0 // GetStream doesn't provide confidence scores
+          });
+          
+          // Count words
+          wordCount += segment.text.split(/\s+/).length;
         } catch (e) {
           console.error("Error parsing JSONL line:", e);
         }
       }
     }
     
-    return formattedTranscription;
+    return {
+      formattedText: formattedTranscription,
+      segments,
+      wordCount
+    };
   } catch (error) {
     console.error("Error fetching transcription:", error);
     throw error;
@@ -114,25 +72,25 @@ export async function POST(request: NextRequest) {
 
     // Handle all transcription-related events for debugging
     if (body.type === "call.transcription_started") {
-      console.log("✅ Transcription STARTED for call:", body.call_cid);
+      console.log("Transcription STARTED for call:", body.call_cid);
       return NextResponse.json({ success: true, message: "Transcription started" });
     }
 
     if (body.type === "call.transcription_stopped") {
-      console.log("⏹️ Transcription STOPPED for call:", body.call_cid);
+      console.log("Transcription STOPPED for call:", body.call_cid);
       return NextResponse.json({ success: true, message: "Transcription stopped" });
     }
 
     if (body.type === "call.transcription_failed") {
-      console.error("❌ Transcription FAILED for call:", body.call_cid);
+      console.error("Transcription FAILED for call:", body.call_cid);
       console.error("Failure reason:", body);
       return NextResponse.json({ success: false, message: "Transcription failed" });
     }
 
     // Handle transcription ready event
     if (body.type === "call.transcription_ready") {
-      console.log("📝 Transcription READY for call:", body.call_cid);
-      const { call_transcription } = body;
+      console.log("Transcription READY for call:", body.call_cid);
+      const { call_transcription, call } = body;
       
       if (!call_transcription?.url) {
         return NextResponse.json(
@@ -142,44 +100,78 @@ export async function POST(request: NextRequest) {
       }
 
       // Fetch the transcription from Stream's S3
-      const transcriptionText = await fetchTranscription(call_transcription.url);
+      const transcriptionData = await fetchTranscription(call_transcription.url);
       
-      if (!transcriptionText) {
+      if (!transcriptionData.formattedText) {
         return NextResponse.json(
           { error: "Transcription is empty" },
           { status: 400 }
         );
       }
-
-      // Analyze the transcription with LLM
-      const analysis = await analyzeTranscription(transcriptionText);
       
-      // Log the analysis result
-      console.log("Mentorship Analysis:", {
-        callId: call_transcription.call_cid,
-        ...analysis,
-      });
-
-      // Store the result for retrieval
       // Extract the actual call ID from the cid (format: "default:callId")
       const callId = call_transcription.call_cid.split(":")[1] || call_transcription.call_cid;
       
-      // Store in temporary storage (in production, use a database)
-      const { storeTranscriptionResult } = await import("../../transcription-result/[callId]/route");
-      storeTranscriptionResult(callId, analysis);
+      // Create transcription data object for Supabase
+      const supabaseTranscriptionData: TranscriptionData = {
+        segments: transcriptionData.segments,
+        transcript_txt_url: call_transcription.url,
+        transcript_vtt_url: call_transcription.subtitle_url || undefined,
+        duration_seconds: call?.duration_seconds || undefined,
+        language: "en", // Default to English
+        word_count: transcriptionData.wordCount,
+        summary: undefined, // No AI analysis
+        keywords: [] 
+      };
+
+      // Prepare data for Supabase storage
+      const transcriptionRecord = {
+        call_id: callId,
+        session_id: call?.session_id || null,
+        mentor_id: call?.created_by?.id || "unknown",
+        participant_id: call?.members?.[0]?.id || "unknown", 
+        transcript_txt_url: call_transcription.url,
+        transcript_vtt_url: call_transcription.subtitle_url || null,
+        transcription_data: supabaseTranscriptionData,
+        call_duration_seconds: call?.duration_seconds || null,
+        call_started_at: call?.started_at || new Date().toISOString(),
+        call_ended_at: call?.ended_at || new Date().toISOString(),
+        transcription_ready_at: new Date().toISOString(),
+        metadata: {
+          stream_call_cid: call_transcription.call_cid,
+          webhook_processed_at: new Date().toISOString()
+        }
+      };
+
+      // Store transcription in Supabase
+      try {
+        const savedTranscription = await TranscriptionService.saveOrUpdateTranscription(transcriptionRecord);
+        
+        if (savedTranscription) {
+          console.log("Transcription saved to Supabase:", savedTranscription.id);
+          console.log("Segments stored:", transcriptionData.segments.length);
+          console.log("Word count:", transcriptionData.wordCount);
+        } else {
+          console.error("Failed to save transcription to Supabase");
+        }
+      } catch (error) {
+        console.error("Error saving transcription to Supabase:", error);
+      }
 
       return NextResponse.json({
         success: true,
         callId: callId,
-        analysis,
+        segments: transcriptionData.segments.length,
+        wordCount: transcriptionData.wordCount,
+        stored: true
       });
     }
 
     // Log any other webhook types
-    console.log(`⚠️ Unhandled webhook type: ${body.type}`);
+    console.log(`Unhandled webhook type: ${body.type}`);
     return NextResponse.json({ success: true, message: `Webhook received: ${body.type}` });
   } catch (error) {
-    console.error("❌ WEBHOOK PROCESSING ERROR:", error);
+    console.error("WEBHOOK PROCESSING ERROR:", error);
     console.error("Error details:", JSON.stringify(error, null, 2));
     return NextResponse.json(
       { error: "Failed to process webhook", details: error },
