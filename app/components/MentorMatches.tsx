@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { MatchResult } from '@/lib/types/interview';
 import { logger } from '@/lib/logger/index';
 
+import Call from './Call';
+
 interface MentorMatchesProps {
   profile: any;
 }
@@ -12,6 +14,7 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeCall, setActiveCall] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -48,10 +51,14 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
 
   const getArchetypeColor = (archetype: string) => {
     switch (archetype) {
-      case 'investor': return 'bg-green-100 text-green-800 border-green-200';
-      case 'developer': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'social_user': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'investor':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'developer':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'social_user':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -91,7 +98,7 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
         <div className="text-center text-red-600">
           <h2 className="text-xl font-bold mb-2">Error Finding Matches</h2>
           <p>{error}</p>
-          <button 
+          <button
             onClick={findMatches}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -102,19 +109,33 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
     );
   }
 
+  if (activeCall) {
+    return (
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <Call />
+        <button
+          onClick={() => setActiveCall(false)}
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          End Call
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-lg">
       <div className="p-6 border-b">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-2xl font-bold">Your Mentor Matches</h2>
-          <span className="text-sm text-gray-600">
-            Found {matches.length} compatible mentors
-          </span>
+          <span className="text-sm text-gray-600">Found {matches.length} compatible mentors</span>
         </div>
         {profile && (
           <div className="flex items-center gap-4 text-sm">
             <span>Your Archetype:</span>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getArchetypeColor(profile.archetype_classification.primary_archetype)}`}>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium border ${getArchetypeColor(profile.archetype_classification.primary_archetype)}`}
+            >
               {profile.archetype_classification.primary_archetype.replace('_', ' ').toUpperCase()}
             </span>
             <span className="text-gray-500">
@@ -137,20 +158,28 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold">{match.mentor.personal_info.fullName}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getArchetypeColor(match.mentor.crypto_expertise.primary_archetype)}`}>
+                      <h3 className="text-lg font-semibold">
+                        {match.mentor.personal_info.fullName}
+                      </h3>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium border ${getArchetypeColor(match.mentor.crypto_expertise.primary_archetype)}`}
+                      >
                         {match.mentor.crypto_expertise.primary_archetype.replace('_', ' ')}
                       </span>
                       <div className="flex items-center gap-1">
                         <span className="text-yellow-500">⭐</span>
-                        <span className="text-sm font-medium">{match.mentor.metrics.community_reputation}</span>
+                        <span className="text-sm font-medium">
+                          {match.mentor.metrics.community_reputation}
+                        </span>
                       </div>
                     </div>
                     <p className="text-gray-600 text-sm mb-2">{match.mentor.personal_info.bio}</p>
                   </div>
-                  
+
                   <div className="text-right">
-                    <div className={`font-bold text-lg ${getMatchScoreColor(match.similarity_score)}`}>
+                    <div
+                      className={`font-bold text-lg ${getMatchScoreColor(match.similarity_score)}`}
+                    >
                       {Math.round(match.similarity_score * 100)}%
                     </div>
                     <div className={`text-xs ${getMatchScoreColor(match.similarity_score)}`}>
@@ -164,7 +193,10 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                     <h4 className="font-medium text-gray-700 mb-1">Expertise</h4>
                     <div className="flex flex-wrap gap-1">
                       {match.mentor.crypto_expertise.specializations.slice(0, 3).map((spec, i) => (
-                        <span key={i} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                        <span
+                          key={i}
+                          className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs"
+                        >
                           {spec}
                         </span>
                       ))}
@@ -191,9 +223,7 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                     <p className="text-gray-600">
                       {match.mentor.availability.days.length} days/week
                     </p>
-                    <p className="text-gray-600">
-                      {match.mentor.availability.timezone}
-                    </p>
+                    <p className="text-gray-600">{match.mentor.availability.timezone}</p>
                   </div>
                 </div>
 
@@ -210,7 +240,10 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                 )}
 
                 <div className="flex gap-2">
-                  <button className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors font-medium">
+                  <button
+                    onClick={() => setActiveCall(true)}
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors font-medium"
+                  >
                     Connect with {match.mentor.personal_info.fullName.split(' ')[0]}
                   </button>
                   <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
