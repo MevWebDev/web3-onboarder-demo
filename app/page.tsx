@@ -5,25 +5,13 @@ import {
   useAddFrame,
   useOpenUrl,
 } from "@coinbase/onchainkit/minikit";
-import {
-  Name,
-  Identity,
-  Address,
-  Avatar,
-  EthBalance,
-} from "@coinbase/onchainkit/identity";
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
 import { useEffect, useMemo, useCallback } from "react";
 import { Button, Icon, Card } from "./components/DemoComponents";
-import { UserButton } from "@civic/auth/react";
+import { UserButton, useUser } from "@civic/auth-web3/react";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
+  const { user } = useUser();
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
 
@@ -32,6 +20,13 @@ export default function App() {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
+
+  // Log user info when available
+  useEffect(() => {
+    if (user) {
+      console.log("Civic Auth user:", user);
+    }
+  }, [user]);
 
   const handleAddFrame = useCallback(async () => {
     await addFrame();
@@ -82,43 +77,33 @@ export default function App() {
                 <Icon name="star" size="lg" className="text-white" />
               </div>
               <div>
-                <UserButton />
+                {/* Civic Auth Integration */}
+                <div className="mb-4">
+                  <UserButton />
+                </div>
+
                 <h2 className="text-xl font-bold text-[var(--app-foreground)] mb-2">
                   Welcome to Web3
                 </h2>
                 <p className="text-[var(--app-foreground-muted)] text-sm leading-relaxed">
                   Start your decentralized journey with the easiest onboarding
-                  experience. Connect your wallet and explore the world of Web3
-                  on Base.
+                  experience. Sign in with GitHub or X, create your embedded
+                  wallet, and explore Web3 on Base.
                 </p>
+
+                {user && (
+                  <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      Welcome back, {user.name || user.email || "User"}!
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
 
-          {/* Wallet Connection */}
-          <Card title="Connect Your Wallet">
-            <div className="space-y-4">
-              <div className="flex justify-center">
-                <Wallet className="z-10">
-                  <ConnectWallet className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-xl transition-all">
-                    <Name className="text-inherit" />
-                  </ConnectWallet>
-                  <WalletDropdown>
-                    <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-                      <Avatar />
-                      <Name />
-                      <Address />
-                      <EthBalance />
-                    </Identity>
-                    <WalletDropdownDisconnect />
-                  </WalletDropdown>
-                </Wallet>
-              </div>
-              <p className="text-center text-xs text-[var(--app-foreground-muted)]">
-                Secure, fast, and built on Base network
-              </p>
-            </div>
-          </Card>
+          {/* Embedded Wallet Component */}
+          <UserButton />
 
           {/* Features Grid */}
           <div className="grid grid-cols-2 gap-4">
@@ -135,7 +120,7 @@ export default function App() {
                     Secure
                   </h3>
                   <p className="text-xs text-[var(--app-foreground-muted)]">
-                    Bank-level security
+                    Social + Wallet Auth
                   </p>
                 </div>
               </div>
@@ -154,7 +139,7 @@ export default function App() {
                     Easy
                   </h3>
                   <p className="text-xs text-[var(--app-foreground-muted)]">
-                    Simple setup
+                    Embedded Wallets
                   </p>
                 </div>
               </div>
@@ -170,7 +155,7 @@ export default function App() {
                     1
                   </div>
                   <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Connect your wallet above
+                    Sign in with GitHub or X above
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -178,7 +163,7 @@ export default function App() {
                     2
                   </div>
                   <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Explore Base ecosystem
+                    Create your embedded wallet
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -186,7 +171,7 @@ export default function App() {
                     3
                   </div>
                   <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Start your Web3 journey
+                    Start transacting on Base
                   </span>
                 </div>
               </div>
