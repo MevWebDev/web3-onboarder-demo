@@ -21,13 +21,17 @@ import {
   WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
 import { useEffect, useMemo, useCallback } from "react";
+import { useAccount } from "wagmi";
 import { Button, Icon, Card } from "./components/DemoComponents";
+import CryptoOnboardingFlow from "./components/CryptoOnboardingFlow";
+import { VideoCallComponent } from "./components/VideoCallComponent";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const { address } = useAccount();
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
+  const { address, isConnected } = useAccount();
 
   const isConnected = !!address;
 
@@ -242,6 +246,7 @@ export default function App() {
               </div>
             </Card>
           </div>
+          <Card>
         </main>
 
         <footer className="mt-6 pt-4 text-center">
