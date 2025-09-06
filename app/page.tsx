@@ -19,13 +19,16 @@ import {
   WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
 import { useEffect, useMemo, useCallback } from "react";
+import { useAccount } from "wagmi";
 import { Button, Icon, Card } from "./components/DemoComponents";
 import { UserButton } from "@civic/auth/react";
+import CryptoOnboardingFlow from "./components/CryptoOnboardingFlow";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
+  const { address, isConnected } = useAccount();
 
   useEffect(() => {
     if (!isFrameReady) {
@@ -161,45 +164,12 @@ export default function App() {
             </Card>
           </div>
 
-          {/* Getting Started */}
-          <Card title="Getting Started">
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400">
-                    1
-                  </div>
-                  <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Connect your wallet above
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-xs font-medium text-purple-600 dark:text-purple-400">
-                    2
-                  </div>
-                  <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Explore Base ecosystem
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-xs font-medium text-green-600 dark:text-green-400">
-                    3
-                  </div>
-                  <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Start your Web3 journey
-                  </span>
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={() => openUrl("https://base.org/ecosystem")}
-                icon={<Icon name="arrow-right" size="sm" />}
-              >
-                Explore Base Ecosystem
-              </Button>
-            </div>
+          {/* Crypto Mentor Matching Flow */}
+          <Card>
+            <CryptoOnboardingFlow 
+              walletAddress={address} 
+              isConnected={isConnected} 
+            />
           </Card>
 
           {/* Development Tools */}
