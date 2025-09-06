@@ -1,4 +1,5 @@
-import type { MiniAppNotificationDetails } from "@farcaster/frame-sdk";
+// lib/notification.ts
+import type { MiniAppNotificationDetails } from "@farcaster/miniapp-sdk";
 import { redis } from "./redis";
 
 const notificationServiceKey =

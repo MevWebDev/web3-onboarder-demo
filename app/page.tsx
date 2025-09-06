@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 
 import {
@@ -18,13 +19,35 @@ import {
   WalletDropdown,
   WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useState } from "react";
+import { useAccount } from "wagmi";
 import { Button, Icon, Card } from "./components/DemoComponents";
+
+// Video call utility functions
+const generateCallId = () => {
+  return `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
+const generateUserId = (address?: string) => {
+  if (address) {
+    return `user-${address.slice(2, 8)}`;
+  }
+  return `user-${Math.random().toString(36).substr(2, 9)}`;
+};
+
+const getUserName = (address?: string) => {
+  if (address) {
+    return `User ${address.slice(0, 6)}...${address.slice(-4)}`;
+  }
+  return `Anonymous User`;
+};
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
+  const { address, isConnected } = useAccount();
+  const [isVideoCallLoading, setIsVideoCallLoading] = useState(false);
 
   useEffect(() => {
     if (!isFrameReady) {
@@ -35,6 +58,38 @@ export default function App() {
   const handleAddFrame = useCallback(async () => {
     await addFrame();
   }, [addFrame]);
+
+  const handleStartVideoCall = useCallback(async () => {
+    setIsVideoCallLoading(true);
+    
+    try {
+      const callId = generateCallId();
+      const userId = generateUserId(address);
+      const userName = getUserName(address);
+
+      // Create video call URL
+      const videoCallUrl = new URL('/video-call', window.location.origin);
+      videoCallUrl.searchParams.set('callId', callId);
+      videoCallUrl.searchParams.set('userId', userId);
+      videoCallUrl.searchParams.set('userName', userName);
+
+      // Open video call in new window
+      const videoWindow = window.open(
+        videoCallUrl.toString(),
+        'videoCall',
+        'width=1200,height=800,scrollbars=no,resizable=yes,status=no,toolbar=no,menubar=no,location=no'
+      );
+
+      if (!videoWindow) {
+        alert('Please allow popups for video calls to work properly.');
+      }
+    } catch (error) {
+      console.error('Error starting video call:', error);
+      alert('Failed to start video call. Please try again.');
+    } finally {
+      setIsVideoCallLoading(false);
+    }
+  }, [address]);
 
   const saveFrameButton = useMemo(() => {
     if (context && !context.client.added) {
@@ -118,6 +173,67 @@ export default function App() {
             </div>
           </Card>
 
+          {/* Video Call Section */}
+          <Card title="Connect with Video">
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl mx-auto flex items-center justify-center mb-3">
+                  <svg 
+                    className="w-6 h-6 text-white" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" 
+                    />
+                  </svg>
+                </div>
+                <p className="text-sm text-[var(--app-foreground-muted)] mb-4">
+                  Start a video call to get personalized Web3 guidance
+                </p>
+                <Button
+                  variant="primary"
+                  className="w-full"
+                  onClick={handleStartVideoCall}
+                  disabled={isVideoCallLoading}
+                >
+                  {isVideoCallLoading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Starting Call...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <svg 
+                        className="w-4 h-4" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" 
+                        />
+                      </svg>
+                      <span>Start Video Call</span>
+                    </div>
+                  )}
+                </Button>
+              </div>
+              {isConnected && (
+                <p className="text-xs text-center text-[var(--app-foreground-muted)]">
+                  Connected as {address?.slice(0, 6)}...{address?.slice(-4)}
+                </p>
+              )}
+            </div>
+          </Card>
+
           {/* Features Grid */}
           <div className="grid grid-cols-2 gap-4">
             <Card className="text-center">
@@ -176,7 +292,7 @@ export default function App() {
                     2
                   </div>
                   <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Explore Base ecosystem
+                    Join the video lobby above
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -184,7 +300,7 @@ export default function App() {
                     3
                   </div>
                   <span className="text-sm text-[var(--app-foreground-muted)]">
-                    Start your Web3 journey
+                    Explore Base ecosystem
                   </span>
                 </div>
               </div>

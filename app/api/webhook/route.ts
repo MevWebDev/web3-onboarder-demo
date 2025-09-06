@@ -1,124 +1,118 @@
-import {
-  setUserNotificationDetails,
-  deleteUserNotificationDetails,
-} from "@/lib/notification";
-import { sendFrameNotification } from "@/lib/notification-client";
-import { http } from "viem";
-import { createPublicClient } from "viem";
-import { optimism } from "viem/chains";
+// app/api/stream-token/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import * as crypto from 'crypto';
 
-const appName = process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME;
+const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;
+const apiSecret = process.env.STREAM_API_SECRET;
 
-const KEY_REGISTRY_ADDRESS = "0x00000000Fc1237824fb747aBDE0FF18990E59b7e";
-
-const KEY_REGISTRY_ABI = [
-  {
-    inputs: [
-      { name: "fid", type: "uint256" },
-      { name: "key", type: "bytes" },
-    ],
-    name: "keyDataOf",
-    outputs: [
-      {
-        components: [
-          { name: "state", type: "uint8" },
-          { name: "keyType", type: "uint32" },
-        ],
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-] as const;
-
-async function verifyFidOwnership(fid: number, appKey: `0x${string}`) {
-  const client = createPublicClient({
-    chain: optimism,
-    transport: http(),
-  });
+export async function POST(request: NextRequest) {
+  // Add CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
 
   try {
-    const result = await client.readContract({
-      address: KEY_REGISTRY_ADDRESS,
-      abi: KEY_REGISTRY_ABI,
-      functionName: "keyDataOf",
-      args: [BigInt(fid), appKey],
-    });
+    console.log('=== Stream Token API Called ===');
+    console.log('API Key:', apiKey ? `${apiKey.slice(0, 8)}...` : 'MISSING');
+    console.log('API Secret:', apiSecret ? 'PRESENT' : 'MISSING');
 
-    return result.state === 1 && result.keyType === 1;
+    // Check if credentials are available
+    if (!apiKey || !apiSecret) {
+      console.error('Missing Stream credentials');
+      return NextResponse.json(
+        { 
+          error: 'Stream API credentials not configured',
+          details: {
+            hasApiKey: !!apiKey,
+            hasApiSecret: !!apiSecret,
+            message: 'Please add NEXT_PUBLIC_STREAM_API_KEY and STREAM_API_SECRET to your .env.local file'
+          }
+        },
+        { status: 500, headers }
+      );
+    }
+
+    // Parse request body
+    let userId;
+    try {
+      const body = await request.json();
+      userId = body.userId;
+      console.log('User ID received:', userId);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid request body', details: 'Expected JSON with userId field' },
+        { status: 400, headers }
+      );
+    }
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400, headers }
+      );
+    }
+
+    // For development, create a simple token
+    // In production, you'd use a proper JWT library
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      iss: 'https://pronto.getstream.io',
+      sub: `user/${userId}`,
+      user_id: userId,
+      iat: now,
+      exp: now + (60 * 60 * 24), // 24 hours
+    };
+
+    // Simple base64 encoding for development
+    // Note: This is a simplified approach for development
+    const header = { typ: 'JWT', alg: 'HS256' };
+    const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    
+    // Create a simple signature using Node.js crypto
+    const signature = crypto
+      .createHmac('sha256', apiSecret)
+      .update(`${encodedHeader}.${encodedPayload}`)
+      .digest('base64url');
+
+    const token = `${encodedHeader}.${encodedPayload}.${signature}`;
+    
+    console.log('Token generated successfully for user:', userId);
+
+    return NextResponse.json(
+      { 
+        success: true,
+        token,
+        userId,
+        apiKey: apiKey.slice(0, 8) + '...' // Don't expose full API key
+      },
+      { headers }
+    );
+
   } catch (error) {
-    console.error("Key Registry verification failed:", error);
-    return false;
-  }
-}
-
-function decode(encoded: string) {
-  return JSON.parse(Buffer.from(encoded, "base64url").toString("utf-8"));
-}
-
-export async function POST(request: Request) {
-  const requestJson = await request.json();
-
-  const { header: encodedHeader, payload: encodedPayload } = requestJson;
-
-  const headerData = decode(encodedHeader);
-  const event = decode(encodedPayload);
-
-  const { fid, key } = headerData;
-
-  const valid = await verifyFidOwnership(fid, key);
-
-  if (!valid) {
-    return Response.json(
-      { success: false, error: "Invalid FID ownership" },
-      { status: 401 },
+    console.error('Stream token generation error:', error);
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : 'No stack') : undefined
+      },
+      { status: 500, headers }
     );
   }
+}
 
-  switch (event.event) {
-    case "frame_added":
-      console.log(
-        "frame_added",
-        "event.notificationDetails",
-        event.notificationDetails,
-      );
-      if (event.notificationDetails) {
-        await setUserNotificationDetails(fid, event.notificationDetails);
-        await sendFrameNotification({
-          fid,
-          title: `Welcome to ${appName}`,
-          body: `Thank you for adding ${appName}`,
-        });
-      } else {
-        await deleteUserNotificationDetails(fid);
-      }
-
-      break;
-    case "frame_removed": {
-      console.log("frame_removed");
-      await deleteUserNotificationDetails(fid);
-      break;
-    }
-    case "notifications_enabled": {
-      console.log("notifications_enabled", event.notificationDetails);
-      await setUserNotificationDetails(fid, event.notificationDetails);
-      await sendFrameNotification({
-        fid,
-        title: `Welcome to ${appName}`,
-        body: `Thank you for enabling notifications for ${appName}`,
-      });
-
-      break;
-    }
-    case "notifications_disabled": {
-      console.log("notifications_disabled");
-      await deleteUserNotificationDetails(fid);
-
-      break;
-    }
-  }
-
-  return Response.json({ success: true });
+// Handle OPTIONS for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
