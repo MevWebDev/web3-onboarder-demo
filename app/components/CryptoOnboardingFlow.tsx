@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import InterviewChat from './InterviewChat';
 import MentorMatches from './MentorMatches';
+import Call from './Call';
 import { logger } from '@/lib/logger/index';
 
 type FlowState = 'waiting' | 'interview' | 'matches' | 'complete';
@@ -11,15 +12,22 @@ interface CryptoOnboardingFlowProps {
   walletAddress?: string;
   isConnected?: boolean;
   onComplete?: () => void;
+  isMentor?: boolean;
 }
 
 export default function CryptoOnboardingFlow({
   walletAddress,
   isConnected,
   onComplete,
+  isMentor,
 }: CryptoOnboardingFlowProps) {
   const [flowState, setFlowState] = useState<FlowState>('waiting');
   const [profile, setProfile] = useState<any>(null);
+
+  // If user is a mentor, show the Call component directly
+  if (isMentor) {
+    return <Call />;
+  }
 
   const handleInterviewComplete = (generatedProfile: any) => {
     logger.info('Interview completed', { profileId: generatedProfile.id });

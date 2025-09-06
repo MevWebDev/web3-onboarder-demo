@@ -13,7 +13,7 @@ import {
 import { useEffect, useMemo, useCallback, useState } from 'react';
 import { Button, Icon, Card } from './components/DemoComponents';
 import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
-import Call from './components/Call';
+
 // import { VideoCallComponent } from './components/VideoCallComponent';
 
 export default function App() {
@@ -127,11 +127,12 @@ export default function App() {
                     I am a Mentor
                   </button>
                 )}
-                {isMentor && <Call />}
+
                 <CryptoOnboardingFlow
                   walletAddress={address}
                   isConnected={isConnected}
                   onComplete={() => setOnboardingComplete(true)}
+                  isMentor={isMentor}
                 />
               </Card>
             </>
