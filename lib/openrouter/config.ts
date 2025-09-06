@@ -1,15 +1,18 @@
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { logger } from '@/lib/logger/index';
 
-// OpenRouter configuration
-export const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
+// OpenRouter configuration using official provider
+export const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
   headers: {
     'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     'X-Title': 'Crypto Mentor Matchmaker',
   },
 });
+
+// Log configuration status
+logger.debug('OpenRouter API Key present:', !!process.env.OPENROUTER_API_KEY);
+logger.debug('OpenRouter API Key length:', process.env.OPENROUTER_API_KEY?.length || 0);
 
 // Model configurations optimized for different tasks
 export const modelConfig = {

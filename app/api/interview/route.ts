@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { streamText } from 'ai';
+import { generateText } from 'ai';
 import { getModel } from '@/lib/openrouter/config';
 import { logger } from '@/lib/logger/index';
 import { 
@@ -136,13 +136,47 @@ async function handleResponse(sessionId: string, userMessage: string) {
   
   Keep it conversational and encouraging. Don't repeat the question word-for-word, but make sure to cover all its key points.`;
 
-  const result = await streamText({
-    model,
-    prompt: transitionPrompt,
+  logger.debug('OpenRouter API Request:', {
+    sessionId,
+    model: 'conversation',
+    promptLength: transitionPrompt.length,
     temperature: 0.7,
   });
 
-  const aiResponse = await result.text;
+  let aiResponse: string;
+  
+  try {
+    const result = await generateText({
+      model,
+      prompt: transitionPrompt,
+      temperature: 0.7,
+    });
+
+    aiResponse = result.text;
+    
+    logger.debug('OpenRouter API Response:', {
+      sessionId,
+      responseLength: aiResponse.length,
+      response: aiResponse.substring(0, 200) + '...',
+      usage: result.usage,
+      finishReason: result.finishReason,
+    });
+    
+    if (!aiResponse || aiResponse.trim().length === 0) {
+      logger.error('Empty AI response received', { sessionId, result });
+      throw new Error('Empty AI response');
+    }
+  } catch (error) {
+    logger.error('OpenRouter API Error:', {
+      sessionId,
+      error: error.message,
+      stack: error.stack,
+    });
+    
+    // Fallback to a simple transition
+    aiResponse = `Great! Thanks for sharing that. ${nextQuestion.prompt}`;
+    logger.info('Using fallback response', { sessionId, fallback: aiResponse });
+  }
   
   sessions.set(sessionId, session);
 
