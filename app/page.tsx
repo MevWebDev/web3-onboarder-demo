@@ -116,7 +116,7 @@ export default function App() {
 
               {/* Crypto Onboarding Flow */}
               <Card title="Step 2: Find Your Mentor">
-                {isConnected && address && (
+                {isConnected && (
                   <button
                     onClick={() => {
                       console.log('isMentor set to true');
