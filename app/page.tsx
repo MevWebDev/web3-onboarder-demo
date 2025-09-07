@@ -16,6 +16,9 @@ import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
 
 import Call from './components/Call';
 
+import { NetworkChecker, ContractExistenceChecker } from './NetworkChecker';
+import CallReview from './components/CallReview';
+
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const { address, isConnected } = useAccount();
@@ -71,6 +74,11 @@ export default function App() {
           {!onboardingComplete ? (
             <>
               {/* Onboarding Section */}
+                  <div>
+      <NetworkChecker />
+      <ContractExistenceChecker />
+      <CallReview onReviewSubmit={(helpful) => console.log({helpful})} />
+    </div>
               <Card className="text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
                 <div className="space-y-4">
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center">
