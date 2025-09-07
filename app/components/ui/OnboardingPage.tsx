@@ -10,7 +10,7 @@ export default function OnboardingPage({ setter }: OnboardingPageProps) {
   const { address, isConnected } = useAccount();
 
   return (
-    <Card title="Step 2: Find Your Mentor">
+    <div className="h-full flex flex-col flex-1 w-[90%] items-center justify-center">
       <CryptoOnboardingFlow
         walletAddress={address}
         isConnected={isConnected}
@@ -19,6 +19,6 @@ export default function OnboardingPage({ setter }: OnboardingPageProps) {
       <Button variant="ghost" size="sm" className="mt-2" onClick={() => setter('connect')}>
         ← Back
       </Button>
-    </Card>
+    </div>
   );
 }
