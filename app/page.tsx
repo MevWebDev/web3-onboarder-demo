@@ -17,6 +17,9 @@ import HelloPage from './components/ui/HelloPage';
 import ConnectPage from './components/ui/ConnectPage';
 import OnboardingPage from './components/ui/OnboardingPage';
 
+import { NetworkChecker, ContractExistenceChecker } from './NetworkChecker';
+import CallReview from './components/CallReview';
+
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const { address, isConnected } = useAccount();
@@ -55,8 +58,10 @@ export default function App() {
   }, [context, handleAddFrame]);
 
   return (
+
     <div className="flex flex-col items-center min-h-[100dvh] font-sans ">
       {step === 'welcome' && <HelloPage setter={setStep} />}
+
 
       {step === 'connect' && <ConnectPage setter={setStep} />}
 
