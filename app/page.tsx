@@ -1,28 +1,19 @@
 'use client';
 
 import { useMiniKit, useAddFrame, useOpenUrl } from '@coinbase/onchainkit/minikit';
-import { Name, Identity, Address, Avatar, EthBalance } from '@coinbase/onchainkit/identity';
 
-import { useAccount } from 'wagmi';
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from '@coinbase/onchainkit/wallet';
 import { useEffect, useMemo, useCallback, useState } from 'react';
 import { Button, Icon, Card } from './components/DemoComponents';
-import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
+
 import HelloPage from './components/ui/HelloPage';
 import ConnectPage from './components/ui/ConnectPage';
 import OnboardingPage from './components/ui/OnboardingPage';
 
-import { NetworkChecker, ContractExistenceChecker } from './NetworkChecker';
-import CallReview from './components/CallReview';
+// import { NetworkChecker, ContractExistenceChecker } from './NetworkChecker';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
-  const { address, isConnected } = useAccount();
+  // const { address, isConnected } = useAccount();
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
 
@@ -58,10 +49,8 @@ export default function App() {
   }, [context, handleAddFrame]);
 
   return (
-
     <div className="flex flex-col items-center min-h-[100dvh] font-sans ">
       {step === 'welcome' && <HelloPage setter={setStep} />}
-
 
       {step === 'connect' && <ConnectPage setter={setStep} />}
 

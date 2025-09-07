@@ -8,6 +8,7 @@ import {
 } from '@coinbase/onchainkit/wallet';
 
 import { Name, Identity, Address, Avatar, EthBalance } from '@coinbase/onchainkit/identity';
+import { NetworkChecker } from '../../NetworkChecker';
 
 interface ConnectPageProps {
   setter: (step: 'welcome' | 'connect' | 'onboarding' | 'home') => void;
