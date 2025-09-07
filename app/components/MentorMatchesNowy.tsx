@@ -13,7 +13,9 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
   const [activeCall, setActiveCall] = useState(false);
   const [showMeetingCreator, setShowMeetingCreator] = useState(false);
   const [selectedMentor, setSelectedMentor] = useState<string>('');
-  const [selectedMentorInitialEth, setSelectedMentorInitialEth] = useState<string | undefined>(undefined);
+  const [selectedMentorInitialEth, setSelectedMentorInitialEth] = useState<string | undefined>(
+    undefined,
+  );
   const [ethUsd, setEthUsd] = useState<number | null>(null);
   useEffect(() => {
     if (profile) {
@@ -32,7 +34,9 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
     };
     fetchPrice();
     timer = setInterval(fetchPrice, 60000);
-    return () => { if (timer) clearInterval(timer); };
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, []);
   const findMatches = async () => {
     try {
@@ -228,41 +232,54 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                     {match.mentor.pricing?.is_paid ? (
                       <div className="mt-2 border border-amber-300 bg-amber-50 rounded-md p-3 text-sm">
                         <div className="mb-2 flex items-center gap-2">
-                          <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold rounded bg-amber-600 text-white">PAID</span>
+                          <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold rounded bg-amber-600 text-white">
+                            PAID
+                          </span>
                           <span className="font-semibold text-amber-900">Pricing</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <div className="flex flex-col">
                             <span className="text-xs text-amber-800">Price (USD)</span>
-                            <span className="font-medium">
-                              {match.mentor.pricing.rate_type === 'per_call' ? `$${match.mentor.pricing.rate_usd.toFixed(0)} / call` : match.mentor.pricing.rate_type === 'per_minute' ? `$${match.mentor.pricing.rate_usd.toFixed(2)} / min` : `$${(match.mentor.pricing.rate_usd/60).toFixed(2)} / min`}
+                            <span className="font-medium text-black">
+                              {match.mentor.pricing.rate_type === 'per_call'
+                                ? `$${match.mentor.pricing.rate_usd.toFixed(0)} / call`
+                                : match.mentor.pricing.rate_type === 'per_minute'
+                                  ? `$${match.mentor.pricing.rate_usd.toFixed(2)} / min`
+                                  : `$${(match.mentor.pricing.rate_usd / 60).toFixed(2)} / min`}
                             </span>
                           </div>
                           <div className="flex flex-col">
                             <span className="text-xs text-amber-800">ETH equiv</span>
-                            <span className="font-medium">
+                            <span className="font-medium text-black">
                               {ethUsd
-                                ? (match.mentor.pricing.rate_type === 'per_call'
-                                    ? (match.mentor.pricing.rate_usd / ethUsd).toFixed(4)
-                                    : match.mentor.pricing.rate_type === 'per_minute'
-                                      ? (match.mentor.pricing.rate_usd / ethUsd).toFixed(6)
-                                      : ((match.mentor.pricing.rate_usd / 60) / ethUsd).toFixed(6))
+                                ? match.mentor.pricing.rate_type === 'per_call'
+                                  ? (match.mentor.pricing.rate_usd / ethUsd).toFixed(4)
+                                  : match.mentor.pricing.rate_type === 'per_minute'
+                                    ? (match.mentor.pricing.rate_usd / ethUsd).toFixed(6)
+                                    : (match.mentor.pricing.rate_usd / 60 / ethUsd).toFixed(6)
                                 : '—'}
                             </span>
                           </div>
                           <div className="flex flex-col">
                             <span className="text-xs text-amber-800">USDC equiv</span>
-                            <span className="font-medium">{match.mentor.pricing.rate_type === 'per_call' ? `${match.mentor.pricing.rate_usd.toFixed(0)} USDC` : match.mentor.pricing.rate_type === 'per_minute' ? `${match.mentor.pricing.rate_usd.toFixed(2)} USDC/min` : `${(match.mentor.pricing.rate_usd/60).toFixed(2)} USDC/min`}</span>
+                            <span className="font-medium text-black">
+                              {match.mentor.pricing.rate_type === 'per_call'
+                                ? `${match.mentor.pricing.rate_usd.toFixed(0)} USDC`
+                                : match.mentor.pricing.rate_type === 'per_minute'
+                                  ? `${match.mentor.pricing.rate_usd.toFixed(2)} USDC/min`
+                                  : `${(match.mentor.pricing.rate_usd / 60).toFixed(2)} USDC/min`}
+                            </span>
                           </div>
                         </div>
                         <div className="mt-3">
                           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 text-base font-semibold">
                             {(() => {
-                              const usd = match.mentor.pricing.rate_type === 'per_call'
-                                ? match.mentor.pricing.rate_usd
-                                : match.mentor.pricing.rate_type === 'per_minute'
-                                  ? match.mentor.pricing.rate_usd * 30
-                                  : match.mentor.pricing.rate_usd;
+                              const usd =
+                                match.mentor.pricing.rate_type === 'per_call'
+                                  ? match.mentor.pricing.rate_usd
+                                  : match.mentor.pricing.rate_type === 'per_minute'
+                                    ? match.mentor.pricing.rate_usd * 30
+                                    : match.mentor.pricing.rate_usd;
                               const pln = usd * 4.0; // rough USD→PLN
                               const coffees = Math.round(pln / 17);
                               return `≈ ${coffees} coffees in Poland`;
@@ -271,7 +288,9 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                           </span>
                         </div>
                         {ethUsd && (
-                          <div className="mt-1 text-[11px] text-amber-700">@ ${ethUsd.toFixed(2)} / ETH (RedStone)</div>
+                          <div className="mt-1 text-[11px] text-amber-700">
+                            @ ${ethUsd.toFixed(2)} / ETH (RedStone)
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -373,7 +392,7 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                         ? `Book (Paid) · $${match.mentor.pricing.rate_usd.toFixed(0)}/call`
                         : match.mentor.pricing.rate_type === 'per_minute'
                           ? `Book (Paid) · from $${match.mentor.pricing.rate_usd.toFixed(2)}/min`
-                          : `Book (Paid) · from $${(match.mentor.pricing.rate_usd/60).toFixed(2)}/min`}
+                          : `Book (Paid) · from $${(match.mentor.pricing.rate_usd / 60).toFixed(2)}/min`}
                     </button>
                   ) : (
                     <button
