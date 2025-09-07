@@ -37,7 +37,7 @@ function ethUsdEndMinusStart(start: number, end: number): number {
 
 function deltaPct(start: number, end: number): string {
   if (!start) return '0.00';
-  return ((end - start) / start * 100).toFixed(2);
+  return (((end - start) / start) * 100).toFixed(2);
 }
 
 export default function Call() {
@@ -401,36 +401,38 @@ export const MyUILayout = ({
       console.log('📞 About to leave call...');
       await call.leave();
       console.log('✅ Call left successfully');
-      setCallEndAt(Date.now());
+      // setCallEndAt(Date.now());
 
-      // Snapshot ETH price at call end for comparison
-      try {
-        const r = await fetch(`/api/prices?symbols=ETH`, { cache: 'no-store' });
-        const j = await r.json();
-        const price = j?.data?.ETH?.value;
-        if (typeof price === 'number') {
-          setEthUsdAtEnd(price);
-          logger.info('Snapshot ETH price at end', { price });
-        }
-      } catch (e) {
-        logger.warn('Failed to snapshot ETH at end', e);
-      }
+      // // Snapshot ETH price at call end for comparison
+      // try {
+      //   const r = await fetch(`/api/prices?symbols=ETH`, { cache: 'no-store' });
+      //   const j = await r.json();
+      //   const price = j?.data?.ETH?.value;
+      //   if (typeof price === 'number') {
+      //     setEthUsdAtEnd(price);
+      //     logger.info('Snapshot ETH price at end', { price });
+      //   }
+      // } catch (e) {
+      //   logger.warn('Failed to snapshot ETH at end', e);
+      // }
 
       // Compute settlement using locked quote and duration
-      try {
-        const durationSeconds = callStartAt ? Math.max(1, Math.round((Date.now() - callStartAt) / 1000)) : 0;
-        if (quote?.quoteId && durationSeconds) {
-          const sr = await fetch('/api/call/settle', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ quoteId: quote.quoteId, durationSeconds, symbol: 'ETH' }),
-          });
-          const sj = await sr.json();
-          if (sj?.success) setSettlement(sj.settlement);
-        }
-      } catch (e) {
-        logger.warn('Failed to settle', e);
-      }
+      // try {
+      //   const durationSeconds = callStartAt
+      //     ? Math.max(1, Math.round((Date.now() - callStartAt) / 1000))
+      //     : 0;
+      //   if (quote?.quoteId && durationSeconds) {
+      //     const sr = await fetch('/api/call/settle', {
+      //       method: 'POST',
+      //       headers: { 'Content-Type': 'application/json' },
+      //       body: JSON.stringify({ quoteId: quote.quoteId, durationSeconds, symbol: 'ETH' }),
+      //     });
+      //     const sj = await sr.json();
+      //     if (sj?.success) setSettlement(sj.settlement);
+      //   }
+      // } catch (e) {
+      //   logger.warn('Failed to settle', e);
+      // }
 
       console.log('📋 CRITICAL: About to set showReview = true');
       setShowReview(true);
@@ -551,7 +553,7 @@ export const MyUILayout = ({
           loading={loadingAnalysis}
           callId={currentCallId}
         />
-        {/* RedStone price snapshot card */}
+        {/* RedStone price snapshot card
         <div className="max-w-2xl mx-auto mt-6 p-4 bg-white rounded-lg shadow border">
           <h3 className="text-lg font-semibold mb-2">RedStone Price Snapshot (ETH/USD)</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -607,7 +609,7 @@ export const MyUILayout = ({
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Show fallback message if no transcription and not loading */}
         {!loadingAnalysis && !analysisResult && transcriptionStage === 'waiting' && (
