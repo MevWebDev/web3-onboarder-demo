@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger/index';interface MeetingCreatorProps {
 mentorName: string;
 onMeetingCreated: () => void;
 onCancel: () => void;
+initialEthAmount?: string;
 }// Smart contract details
 const CONTRACT_ADDRESS = '0x6b3398c941887a28c994802f6b22a84cc0a9322b' as const;
 const RECEIVER_ADDRESS = '0xa9Eeb7010a1BDB3Ef38812Be8C5777F66d5163F0' as const;// Contract ABI for the createMeeting function
@@ -23,8 +24,8 @@ outputs: [],
 stateMutability: 'payable',
 type: 'function',
 },
-] as const;export default function MeetingCreator({ mentorName, onMeetingCreated, onCancel }: MeetingCreatorProps) {
-const [paymentAmount, setPaymentAmount] = useState('0.001'); // Default amount in ETH
+] as const;export default function MeetingCreator({ mentorName, onMeetingCreated, onCancel, initialEthAmount }: MeetingCreatorProps) {
+const [paymentAmount, setPaymentAmount] = useState(initialEthAmount ?? '0.001'); // Default amount in ETH
 const [isCreating, setIsCreating] = useState(false);
 const { address } = useAccount();const { writeContract, data: hash, error } = useWriteContract();const { isLoading: isTransactionLoading, isSuccess } = useWaitForTransactionReceipt({
 hash,

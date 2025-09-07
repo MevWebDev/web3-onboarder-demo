@@ -176,6 +176,15 @@ export const CryptoMentorProfileSchema = z.object({
     completion_rate: z.number().min(0).max(1),
   }),
   
+  // Optional pricing information (if mentor is paid)
+  pricing: z
+    .object({
+      is_paid: z.boolean(),
+      rate_type: z.enum(['per_minute', 'per_hour', 'per_call']),
+      rate_usd: z.number(),
+    })
+    .optional(),
+  
   vector_embedding: z.array(z.number()).optional(),
   search_keywords: z.array(z.string()),
 });

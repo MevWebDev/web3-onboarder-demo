@@ -11,10 +11,10 @@ import {
   WalletDropdownDisconnect,
 } from '@coinbase/onchainkit/wallet';
 import { useEffect, useMemo, useCallback, useState } from 'react';
-import { Button, Icon, Card } from './components/DemoComponents';
-import CryptoOnboardingFlow from './components/CryptoOnboardingFlow';
+import { Button, Icon, Card } from '../components/DemoComponents';
+import CryptoOnboardingFlow from '../components/CryptoOnboardingFlow';
 
-import Call from './components/Call';
+import Call from '../components/Call';
 
 export interface stepProps {
   welcome: string;
@@ -150,7 +150,7 @@ export default function App() {
           ) : (
             <>
               {/* Hero Section */}
-              <Card className="text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
+              <Card className="text-center bg-gradient-to-br from-blue-50 to purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
                 <div className="space-y-4">
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center">
                     <span className="text-white text-2xl">📞</span>
@@ -190,7 +190,7 @@ export default function App() {
                 <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg rounded-tl-lg z-10">
                   Make Calls
                 </div>
-                <Call isMentor={isMentor} />
+                <Call />
               </div>
 
               {/* How Calling Works */}
@@ -308,3 +308,4 @@ export default function App() {
     </div>
   );
 }
+

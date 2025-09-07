@@ -49,6 +49,11 @@ export const fakeMentors: CryptoMentorProfile[] = [
       response_time: 'same_day',
       completion_rate: 0.92,
     },
+    pricing: {
+      is_paid: true,
+      rate_type: 'per_call',
+      rate_usd: 100, // $100 per call
+    },
     search_keywords: ['defi', 'investor', 'trading', 'yield', 'portfolio', 'risk'],
   },
   

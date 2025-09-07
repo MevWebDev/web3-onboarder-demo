@@ -10,6 +10,7 @@ import {
   User,
 } from '@stream-io/video-react-sdk';
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger/index';
 import { MentorshipReview } from './MentorshipReview';
 import TranscriptionStatus from './TranscriptionStatus';
 import CallReview from './CallReview';
@@ -30,6 +31,15 @@ const user: User = {
   image: 'https://getstream.io/random_svg/?id=oliver&name=Oliver',
 };
 
+function ethUsdEndMinusStart(start: number, end: number): number {
+  return end - start;
+}
+
+function deltaPct(start: number, end: number): string {
+  if (!start) return '0.00';
+  return ((end - start) / start * 100).toFixed(2);
+}
+
 export default function Call() {
   const [call, setCall] = useState<any>(null);
   const [isInCall, setIsInCall] = useState(false);
@@ -38,6 +48,12 @@ export default function Call() {
   const [client, setClient] = useState<StreamVideoClient | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
+  const [ethUsdAtStart, setEthUsdAtStart] = useState<number | null>(null);
+  const [ethUsdAtEnd, setEthUsdAtEnd] = useState<number | null>(null);
+  const [callStartAt, setCallStartAt] = useState<number | null>(null);
+  const [callEndAt, setCallEndAt] = useState<number | null>(null);
+  const [quote, setQuote] = useState<any>(null);
+  const [settlement, setSettlement] = useState<any>(null);
 
   // Initialize Stream client with server-generated token
   useEffect(() => {
@@ -138,12 +154,38 @@ export default function Call() {
       setCall(newCall);
       setCurrentCallId(dynamicCallId);
       setIsInCall(true);
+      setCallStartAt(Date.now());
 
       console.log('✅ Call created and joined successfully!');
       console.log('📋 Call ID:', newCall.id);
       console.log('📋 Call CID:', newCall.cid);
       console.log('📋 Call State:', newCall.state);
       console.log('👥 Participants:', newCall.state.participants);
+      // Snapshot ETH price at call start using RedStone endpoint
+      try {
+        const r = await fetch(`/api/prices?symbols=ETH`, { cache: 'no-store' });
+        const j = await r.json();
+        const price = j?.data?.ETH?.value;
+        if (typeof price === 'number') {
+          setEthUsdAtStart(price);
+          logger.info('Snapshot ETH price at start', { price });
+        }
+      } catch (e) {
+        logger.warn('Failed to snapshot ETH at start', e);
+      }
+
+      // Create a quote for this call (e.g., $0.05/min)
+      try {
+        const qr = await fetch('/api/call/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: 'ETH', usdPerMinute: 0.05 }),
+        });
+        const qj = await qr.json();
+        if (qj?.success) setQuote(qj.quote);
+      } catch (e) {
+        logger.warn('Failed to create quote', e);
+      }
     } catch (error) {
       console.error('❌ Failed to create/join call:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
@@ -359,6 +401,36 @@ export const MyUILayout = ({
       console.log('📞 About to leave call...');
       await call.leave();
       console.log('✅ Call left successfully');
+      setCallEndAt(Date.now());
+
+      // Snapshot ETH price at call end for comparison
+      try {
+        const r = await fetch(`/api/prices?symbols=ETH`, { cache: 'no-store' });
+        const j = await r.json();
+        const price = j?.data?.ETH?.value;
+        if (typeof price === 'number') {
+          setEthUsdAtEnd(price);
+          logger.info('Snapshot ETH price at end', { price });
+        }
+      } catch (e) {
+        logger.warn('Failed to snapshot ETH at end', e);
+      }
+
+      // Compute settlement using locked quote and duration
+      try {
+        const durationSeconds = callStartAt ? Math.max(1, Math.round((Date.now() - callStartAt) / 1000)) : 0;
+        if (quote?.quoteId && durationSeconds) {
+          const sr = await fetch('/api/call/settle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quoteId: quote.quoteId, durationSeconds, symbol: 'ETH' }),
+          });
+          const sj = await sr.json();
+          if (sj?.success) setSettlement(sj.settlement);
+        }
+      } catch (e) {
+        logger.warn('Failed to settle', e);
+      }
 
       console.log('📋 CRITICAL: About to set showReview = true');
       setShowReview(true);
@@ -479,6 +551,63 @@ export const MyUILayout = ({
           loading={loadingAnalysis}
           callId={currentCallId}
         />
+        {/* RedStone price snapshot card */}
+        <div className="max-w-2xl mx-auto mt-6 p-4 bg-white rounded-lg shadow border">
+          <h3 className="text-lg font-semibold mb-2">RedStone Price Snapshot (ETH/USD)</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">At start:</span>
+              <span className="ml-2 font-mono">{ethUsdAtStart ? `$${ethUsdAtStart.toFixed(2)}` : '—'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">At end:</span>
+              <span className="ml-2 font-mono">{ethUsdAtEnd ? `$${ethUsdAtEnd.toFixed(2)}` : '—'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Duration:</span>
+              <span className="ml-2 font-mono">
+                {callStartAt && callEndAt ? `${Math.max(1, Math.round((callEndAt - callStartAt) / 1000))}s` : '—'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Δ Price:</span>
+              <span className="ml-2 font-mono">
+                {ethUsdAtStart != null && ethUsdAtEnd != null
+                  ? `${(ethUsdEndMinusStart(ethUsdAtStart, ethUsdAtEnd)).toFixed(2)} (${deltaPct(ethUsdAtStart, ethUsdAtEnd)}%)`
+                  : '—'}
+              </span>
+            </div>
+          </div>
+          {quote && (
+            <div className="mt-4 border-t pt-3 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-gray-500">Quote:</span>
+                  <span className="ml-2 font-mono">${quote.usdPerMinute.toFixed(2)}/min</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">ETH/min:</span>
+                  <span className="ml-2 font-mono">{quote.ethPerMinute?.toFixed(8)}</span>
+                </div>
+                <div className="col-span-2 text-gray-500">Quote ID: <span className="font-mono">{quote.quoteId}</span></div>
+              </div>
+            </div>
+          )}
+          {settlement && (
+            <div className="mt-4 border-t pt-3 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-gray-500">Billed minutes:</span>
+                  <span className="ml-2 font-mono">{settlement.minutes}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">ETH due:</span>
+                  <span className="ml-2 font-mono">{settlement.ethDue?.toFixed(8)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Show fallback message if no transcription and not loading */}
         {!loadingAnalysis && !analysisResult && transcriptionStage === 'waiting' && (
