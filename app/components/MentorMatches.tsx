@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MatchResult } from '@/lib/types/interview';
 import { logger } from '@/lib/logger/index';
 
@@ -15,12 +15,38 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCall, setActiveCall] = useState(false);
+  const [ethUsd, setEthUsd] = useState<number | null>(null);
+  const [lastPriceTs, setLastPriceTs] = useState<number | null>(null);
 
   useEffect(() => {
     if (profile) {
       findMatches();
     }
   }, [profile]);
+
+  // Fetch ETH/USD from RedStone to show live ETH-equivalent pricing for paid mentors
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    const fetchPrice = async () => {
+      try {
+        const res = await fetch('/api/prices?symbols=ETH', { cache: 'no-store' });
+        const json = await res.json();
+        const price = json?.data?.ETH?.value;
+        const ts = json?.data?.ETH?.timestamp;
+        if (typeof price === 'number') {
+          setEthUsd(price);
+          if (typeof ts === 'number') setLastPriceTs(ts);
+        }
+      } catch (e) {
+        // silent
+      }
+    };
+    fetchPrice();
+    timer = setInterval(fetchPrice, 60000);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, []);
 
   const findMatches = async () => {
     try {
@@ -73,6 +99,15 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
     if (score >= 0.6) return 'Good Match';
     return 'Fair Match';
   };
+
+  // If user chose to start a call, render the Call component
+  if (activeCall) {
+    return (
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <Call />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -139,7 +174,7 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {matches.map((match, index) => (
+            {matches.map((match: MatchResult, index: number) => (
               <div key={match.mentor.id} className="p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -160,6 +195,61 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                       </div>
                     </div>
                     <p className="text-gray-600 text-sm mb-2">{match.mentor.personal_info.bio}</p>
+                    {match.mentor.pricing?.is_paid ? (
+                      <div className="mt-2 border border-amber-300 bg-amber-50 rounded-md p-3 text-sm">
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold rounded bg-amber-600 text-white">PAID</span>
+                          <span className="font-semibold text-amber-900">Pricing</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <div className="flex flex-col">
+                            <span className="text-xs text-amber-800">Price (USD)</span>
+                            <span className="font-medium">
+                              {match.mentor.pricing.rate_type === 'per_call' ? `$${match.mentor.pricing.rate_usd.toFixed(0)} / call` : match.mentor.pricing.rate_type === 'per_minute' ? `$${match.mentor.pricing.rate_usd.toFixed(2)} / min` : `$${(match.mentor.pricing.rate_usd/60).toFixed(2)} / min`}
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs text-amber-800">ETH equiv</span>
+                            <span className="font-medium">
+                              {ethUsd
+                                ? (match.mentor.pricing.rate_type === 'per_call'
+                                    ? (match.mentor.pricing.rate_usd / ethUsd).toFixed(4)
+                                    : match.mentor.pricing.rate_type === 'per_minute'
+                                      ? (match.mentor.pricing.rate_usd / ethUsd).toFixed(6)
+                                      : ((match.mentor.pricing.rate_usd / 60) / ethUsd).toFixed(6))
+                                : '—'}
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs text-amber-800">USDC equiv</span>
+                            <span className="font-medium">{match.mentor.pricing.rate_type === 'per_call' ? `${match.mentor.pricing.rate_usd.toFixed(0)} USDC` : match.mentor.pricing.rate_type === 'per_minute' ? `${match.mentor.pricing.rate_usd.toFixed(2)} USDC/min` : `${(match.mentor.pricing.rate_usd/60).toFixed(2)} USDC/min`}</span>
+                          </div>
+                        </div>
+                        {/* Poland coffee equivalence (assume 17 PLN per coffee) */}
+                        <div className="mt-3">
+                          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 text-base font-semibold">
+                            {(() => {
+                              const usd = match.mentor.pricing.rate_type === 'per_call'
+                                ? match.mentor.pricing.rate_usd
+                                : match.mentor.pricing.rate_type === 'per_minute'
+                                  ? match.mentor.pricing.rate_usd * 30
+                                  : match.mentor.pricing.rate_usd;
+                              const pln = usd * 4.0; // rough USD→PLN
+                              const coffees = Math.round(pln / 17);
+                              return `≈ ${coffees} coffees in Poland`;
+                            })()}
+                            <span>☕</span>
+                          </span>
+                        </div>
+                        {ethUsd && (
+                          <div className="mt-1 text-[11px] text-amber-700">@ ${ethUsd.toFixed(2)} / ETH (RedStone)</div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-emerald-100 text-emerald-800">
+                        Free
+                      </span>
+                    )}
                   </div>
 
                   <div className="text-right">
@@ -178,7 +268,7 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                   <div>
                     <h4 className="font-medium text-gray-700 mb-1">Expertise</h4>
                     <div className="flex flex-wrap gap-1">
-                      {match.mentor.crypto_expertise.specializations.slice(0, 3).map((spec, i) => (
+                      {match.mentor.crypto_expertise.specializations.slice(0, 3).map((spec: string, i: number) => (
                         <span
                           key={i}
                           className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs"
@@ -226,12 +316,25 @@ export default function MentorMatches({ profile }: MentorMatchesProps) {
                 )}
 
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setActiveCall(true)}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors font-medium"
-                  >
-                    Connect with {match.mentor.personal_info.fullName.split(' ')[0]}
-                  </button>
+                  {match.mentor.pricing?.is_paid ? (
+                    <button
+                      onClick={() => setActiveCall(true)}
+                      className="flex-1 bg-amber-500 text-white py-2 px-4 rounded-lg hover:bg-amber-600 transition-colors font-medium"
+                    >
+                      {match.mentor.pricing.rate_type === 'per_call'
+                        ? `Book (Paid) · $${match.mentor.pricing.rate_usd.toFixed(0)}/call`
+                        : match.mentor.pricing.rate_type === 'per_minute'
+                          ? `Book (Paid) · from $${match.mentor.pricing.rate_usd.toFixed(2)}/min`
+                          : `Book (Paid) · from $${(match.mentor.pricing.rate_usd/60).toFixed(2)}/min`}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setActiveCall(true)}
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors font-medium"
+                    >
+                      Connect (Free)
+                    </button>
+                  )}
                   <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     View Profile
                   </button>
