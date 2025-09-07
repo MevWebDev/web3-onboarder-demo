@@ -21,17 +21,26 @@ async function analyzeTranscription(
   transcriptionText: string
 ): Promise<MentorshipAnalysis> {
   try {
-    const systemMessage = `You are an AI assistant that analyzes mentor-mentee conversations to determine if the mentor was helpful.
+    const systemMessage = `You are an AI assistant that analyzes mentor-mentee conversations of any length to determine if the mentor was helpful.
+
+IMPORTANT: Even very short conversations can be helpful! Consider:
+- Quick answers to specific questions
+- Brief but useful guidance or direction  
+- Encouraging words or positive reinforcement
+- Simple clarifications that solve problems
+- Short technical help or explanations
 
 Analyze the following transcription and determine:
 1. Was the mentor helpful to the mentee? (true/false)
 2. Provide a brief reason (1-2 sentences) explaining your decision.
 
 Consider factors like:
-- Did the mentor provide clear guidance or answers?
+- Did the mentor provide useful guidance (even if brief)?
 - Was the mentor engaged and responsive?
 - Did the mentor offer practical advice or solutions?
-- Was the conversation productive and on-topic?
+- Was the mentor encouraging or supportive?
+
+Don't penalize short conversations - focus on whether the mentor provided value.
 
 Return your analysis as a JSON object with:
 - decision: boolean (true if helpful, false if not)

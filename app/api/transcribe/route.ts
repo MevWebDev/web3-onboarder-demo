@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     console.log('🎙️ Starting transcript analysis process...');
     console.log('Transcript:', transcript);
     
-    if (!transcript || transcript.length < 10) {
+    if (!transcript || transcript.length < 3) {
       return NextResponse.json({ 
         error: 'Transcription failed or audio too short' 
       }, { status: 400 });
@@ -52,17 +52,22 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: `You are an expert in mentorship and coaching evaluation. Analyze the following transcript of a mentoring session and evaluate the mentor's effectiveness.
+            content: `You are an expert in mentorship and coaching evaluation. Analyze any mentoring conversation, regardless of length, and determine if the mentor was helpful.
+
+            IMPORTANT: Even very short conversations can be helpful! Consider:
+            - Quick answers to specific questions
+            - Brief but useful guidance or direction
+            - Encouraging words or positive reinforcement
+            - Simple clarifications that solve problems
+            - Short technical help or explanations
             
-            Focus on:
+            For ANY conversation length, evaluate:
             1. Was the mentor helpful and supportive?
-            2. Did they provide clear, actionable guidance?
-            3. Were they encouraging and positive?
-            4. Did they listen effectively and respond to the mentee's needs?
-            5. Were their technical explanations accurate and appropriate?
-            6. Did they foster a growth mindset?
+            2. Did they provide useful guidance (even if brief)?
+            3. Were they encouraging and positive in tone?
+            4. Did they respond appropriately to the mentee's needs?
             
-            Be specific and provide examples from the transcript.`
+            Don't penalize short conversations - focus on whether the mentor provided value, even briefly.`
           },
           {
             role: 'user',

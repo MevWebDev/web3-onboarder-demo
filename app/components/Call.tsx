@@ -285,47 +285,28 @@ export const MyUILayout = ({ call, setIsInCall, setShowReview, currentCallId, sh
 
   const handleStopCall = async () => {
     if (!call) {
-      console.log("❌ No call object available");
       return;
     }
     
-    console.log("\n⏹️ STARTING handleStopCall function");
-    console.log("Initial state - isTranscribing:", isTranscribing);
-    console.log("Initial state - showReview:", showReview);
-    
     try {
       if (isTranscribing) {
-        console.log("🛑 Stopping audio transcription...");
         setTranscriptionStatus("Stopping recording and processing final audio...");
         setIsTranscribing(false);
         setLoadingAnalysis(true);
-        console.log("✅ Audio transcription stopping initiated");
-      } else {
-        console.log("⚠️ Not transcribing, skipping transcription stop");
       }
       
-      console.log("📞 About to leave call...");
       await call.leave();
-      console.log("✅ Call left successfully");
-      
-      console.log("📋 CRITICAL: About to set showReview = true");
-      setShowReview(true);
-      console.log("📋 CRITICAL: setShowReview(true) called - should trigger re-render");
-      
-      // Don't set isInCall to false here - let the parent handle both states
       setIsInCall(false);
       
-      console.log("📋 STATE UPDATE SUMMARY:");
-      console.log("  - setShowReview(true) was called");
-      console.log("  - setIsInCall(false) was called");
-      console.log("  - Parent should now render the review screen");
-      console.log("📋 Function completed successfully - expecting re-render now");
+      // Wait for any pending analysis to complete before showing review
+      setTimeout(() => {
+        setShowReview(true);
+      }, 500);
       
     } catch (error) {
-      console.error("❌ CRITICAL ERROR in handleStopCall:", error);
-      console.error("❌ Error stack:", (error as any).stack);
-      console.error("❌ This error may prevent state updates!");
+      console.error("❌ Error stopping call:", error);
       setTranscriptionStatus(`Error stopping call: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setLoadingAnalysis(false);
     }
   };
 

@@ -98,7 +98,7 @@ const AudioTranscription: React.FC<AudioTranscriptionProps> = ({
     console.log('📝 Combined transcript being sent:', combinedTranscript);
     console.log('📏 Transcript length:', combinedTranscript.length);
     
-    if (combinedTranscript.length < 5) {
+    if (combinedTranscript.length < 3) {
       console.log('⚠️ Transcript too short, skipping processing');
       return;
     }
