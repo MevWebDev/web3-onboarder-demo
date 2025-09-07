@@ -9,10 +9,17 @@ import {
   useCallStateHooks,
   User,
 } from "@stream-io/video-react-sdk";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import dynamic from 'next/dynamic';
 import { MentorshipReview } from "./MentorshipReview";
-import TranscriptionStatus from "./TranscriptionStatus";
+import AIAnalysisResult from "./AIAnalysisResult";
 import CallReview from "./CallReview";
+
+// Use real audio transcription with OpenRouter API
+const AudioTranscription = dynamic(() => import('./AudioTranscription'), { 
+  ssr: false,
+  loading: () => <div className="text-sm text-gray-500">Loading audio system...</div>
+});
 
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "../index.css";
@@ -229,6 +236,9 @@ export const MyUILayout = ({ call, setIsInCall, setShowReview, currentCallId, sh
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [transcriptionStage, setTranscriptionStage] = useState<'waiting' | 'fetching' | 'analyzing' | 'complete' | 'error' | 'timeout'>('waiting');
+  const [fullTranscript, setFullTranscript] = useState<string>('');
+  const [realtimeFeedback, setRealtimeFeedback] = useState<string[]>([]);
+  const [audioTranscriptionRef, setAudioTranscriptionRef] = useState<any>(null);
 
   // Debug: Track showReview state changes
   useEffect(() => {
@@ -246,58 +256,31 @@ export const MyUILayout = ({ call, setIsInCall, setShowReview, currentCallId, sh
     console.log("  - isTranscribing:", isTranscribing);
   });
 
-  useEffect(() => {
-    if (!call) return;
-
-    const handleTranscriptionStarted = () => {
-      setTranscriptionStatus("Transcription started");
-      setIsTranscribing(true);
-    };
-
-    const handleTranscriptionStopped = () => {
-      setTranscriptionStatus("Transcription stopped");
-      setIsTranscribing(false);
-    };
-
-    const handleTranscriptionReady = (event: any) => {
-      console.log("Transcription ready:", event);
-      setTranscriptionStatus("Transcription ready - processing...");
-      // Start polling for analysis result
-      setLoadingAnalysis(true);
-      pollForAnalysisResult(currentCallId);
-    };
-
-    call.on("call.transcription_started", handleTranscriptionStarted);
-    call.on("call.transcription_stopped", handleTranscriptionStopped);
-    call.on("call.transcription_ready", handleTranscriptionReady);
-
-    return () => {
-      call.off("call.transcription_started", handleTranscriptionStarted);
-      call.off("call.transcription_stopped", handleTranscriptionStopped);
-      call.off("call.transcription_ready", handleTranscriptionReady);
-    };
-  }, [call, currentCallId]);
+  // New handlers for audio transcription system
+  const handleTranscriptUpdate = useCallback((newTranscript: string) => {
+    console.log('📝 New transcript chunk received:', newTranscript);
+    setFullTranscript(prev => prev + '\n' + newTranscript);
+    setTranscriptionStatus('Recording and analyzing conversation...');
+  }, []);
+  
+  const handleAnalysisComplete = useCallback((analysis: any) => {
+    console.log('🧠 Analysis completed:', analysis);
+    setAnalysisResult(analysis);
+    setTranscriptionStage('complete');
+    setTranscriptionStatus('AI analysis complete!');
+    setLoadingAnalysis(false);
+  }, []);
+  
+  const handleRealtimeFeedback = useCallback((feedback: string) => {
+    console.log('🌊 Real-time feedback:', feedback);
+    setRealtimeFeedback(prev => [...prev, feedback]);
+  }, []);
 
   const handleStartTranscription = async () => {
-    if (!call) return;
-    try {
-      console.log("\n▶️ STARTING TRANSCRIPTION");
-      console.log("Call ID:", currentCallId);
-      console.log("Call object:", call);
-      
-      const result = await call.startTranscription({ 
-        language: "en",
-        closed_captions: true 
-      });
-      
-      console.log("✅ Transcription start result:", result);
-      setIsTranscribing(true);
-      setTranscriptionStatus("Transcription started - recording conversation...");
-    } catch (error) {
-      console.error("❌ TRANSCRIPTION START ERROR:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
-      setTranscriptionStatus(`Failed to start transcription: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    console.log('🎙️ Starting audio transcription system...');
+    setIsTranscribing(true);
+    setTranscriptionStatus('Ready to record - waiting for audio...');
+    setTranscriptionStage('waiting');
   };
 
   const handleStopCall = async () => {
@@ -312,19 +295,11 @@ export const MyUILayout = ({ call, setIsInCall, setShowReview, currentCallId, sh
     
     try {
       if (isTranscribing) {
-        console.log("🛑 About to stop transcription...");
-        const stopResult = await call.stopTranscription();
-        console.log("✅ Transcription stopped successfully:", stopResult);
-        setTranscriptionStatus("Transcription stopped - processing...");
+        console.log("🛑 Stopping audio transcription...");
+        setTranscriptionStatus("Stopping recording and processing final audio...");
         setIsTranscribing(false);
         setLoadingAnalysis(true);
-        console.log("✅ Transcription state updates queued");
-        
-        // Start polling for analysis result
-        setTimeout(() => {
-          console.log("🔍 Starting to poll for analysis results...");
-          pollForAnalysisResult(currentCallId);
-        }, 3000);
+        console.log("✅ Audio transcription stopping initiated");
       } else {
         console.log("⚠️ Not transcribing, skipping transcription stop");
       }
@@ -348,76 +323,13 @@ export const MyUILayout = ({ call, setIsInCall, setShowReview, currentCallId, sh
       
     } catch (error) {
       console.error("❌ CRITICAL ERROR in handleStopCall:", error);
-      console.error("❌ Error stack:", error.stack);
+      console.error("❌ Error stack:", (error as any).stack);
       console.error("❌ This error may prevent state updates!");
       setTranscriptionStatus(`Error stopping call: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
-  const pollForAnalysisResult = async (callId: string, attempts = 0) => {
-    const maxAttempts = 60; // Poll for up to 2 minutes
-    
-    try {
-      console.log(`🔍 Polling attempt ${attempts + 1}/${maxAttempts} for callId: ${callId}`);
-      
-      // First, try the new ListTranscriptions API approach
-      const transcriptionResponse = await fetch(`/api/stream/list-transcriptions/${callId}`);
-      const transcriptionData = await transcriptionResponse.json();
-      
-      console.log("📊 ListTranscriptions API response:", transcriptionData);
-      
-      if (transcriptionData.success && transcriptionData.hasTranscription && transcriptionData.analysis) {
-        console.log("✅ Analysis found via ListTranscriptions API!", transcriptionData.analysis);
-        setAnalysisResult(transcriptionData.analysis);
-        setLoadingAnalysis(false);
-        setTranscriptionStage('complete');
-        setTranscriptionStatus("Analysis complete!");
-        return;
-      }
-      
-      // Fallback to webhook-based result checking
-      const response = await fetch(`/api/transcription-result/${callId}`);
-      const data = await response.json();
-      
-      console.log("📊 Webhook polling response:", data);
-      
-      // Update transcription stage based on API response
-      if (data.stage) {
-        setTranscriptionStage(data.stage);
-        setTranscriptionStatus(data.message || "Processing...");
-      }
-      
-      if (data.analysis) {
-        console.log("✅ Analysis found via webhook!", data.analysis);
-        setAnalysisResult(data.analysis);
-        setLoadingAnalysis(false);
-        setTranscriptionStage('complete');
-        setTranscriptionStatus("Analysis complete!");
-      } else if (attempts < maxAttempts) {
-        // Continue polling
-        const statusMsg = transcriptionData.success ? 
-          `Waiting for transcription... (${transcriptionData.message || 'Processing'})` :
-          `No analysis yet, stage: ${data.stage}, continuing to poll...`;
-        console.log(`⏳ ${statusMsg}`);
-        
-        // Update status to show we're checking transcriptions
-        setTranscriptionStage('fetching');
-        setTranscriptionStatus("Checking for available transcriptions...");
-        
-        setTimeout(() => pollForAnalysisResult(callId, attempts + 1), 3000); // Poll every 3 seconds
-      } else {
-        console.log("⏰ Polling timeout reached");
-        setLoadingAnalysis(false);
-        setTranscriptionStage('timeout');
-        setTranscriptionStatus("Analysis timeout - transcription may not be ready yet");
-      }
-    } catch (error) {
-      console.error("❌ Error fetching analysis:", error);
-      setLoadingAnalysis(false);
-      setTranscriptionStage('error');
-      setTranscriptionStatus("Error occurred while fetching analysis");
-    }
-  };
+  // Polling logic no longer needed - analysis happens in real-time through AudioTranscription component
 
   // Show review screen after call ends
   if (showReview) {
@@ -425,12 +337,13 @@ export const MyUILayout = ({ call, setIsInCall, setShowReview, currentCallId, sh
       <div className="p-8">
         <h1 className="text-3xl font-bold text-center mb-4">Call Ended</h1>
         
-        {/* Show transcription status component while processing */}
-        <TranscriptionStatus 
-          stage={transcriptionStage}
-          loading={loadingAnalysis}
-          hasAnalysis={!!analysisResult}
-        />
+        {/* Show AI Analysis Result */}
+        <div className="mb-6">
+          <AIAnalysisResult 
+            isLoading={loadingAnalysis}
+            analysis={analysisResult}
+          />
+        </div>
         
         {/* Show call review component */}
         <div className="mb-6">
@@ -438,6 +351,20 @@ export const MyUILayout = ({ call, setIsInCall, setShowReview, currentCallId, sh
             console.log('Call review submitted:', isPositive);
           }} />
         </div>
+        
+        {/* Show real-time feedback if available */}
+        {realtimeFeedback.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3">Real-time Coaching Insights</h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {realtimeFeedback.slice(-3).map((feedback, index) => (
+                <div key={index} className="text-sm bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                  {feedback}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* Show mentorship review once analysis is complete */}
         <MentorshipReview 
@@ -467,28 +394,37 @@ export const MyUILayout = ({ call, setIsInCall, setShowReview, currentCallId, sh
       <SpeakerLayout participantsBarPosition="bottom" />
       <div className="flex flex-col gap-4 p-4">
         <CallControls />
-        <div className="flex gap-4 justify-center">
-          {!isTranscribing ? (
-            <button
-              onClick={handleStartTranscription}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-semibold"
-            >
-              🔴 Start Transcription
-            </button>
-          ) : (
-            <button
-              disabled
-              className="px-4 py-2 bg-gray-400 text-white rounded font-semibold cursor-not-allowed"
-            >
-              🔴 Recording...
-            </button>
+        <div className="space-y-4">
+          {/* Audio Transcription Component */}
+          {isTranscribing && (
+            <AudioTranscription 
+              onTranscriptUpdate={handleTranscriptUpdate}
+              onAnalysisComplete={handleAnalysisComplete}
+              onRealtimeFeedback={handleRealtimeFeedback}
+            />
           )}
-          <button
-            onClick={handleStopCall}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            🛑 End Call & Stop Transcription
-          </button>
+          
+          <div className="flex gap-4 justify-center">
+            {!isTranscribing ? (
+              <button
+                onClick={handleStartTranscription}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-semibold"
+              >
+                🔴 Start Recording
+              </button>
+            ) : (
+              <div className="text-center">
+                <div className="text-sm text-green-600 font-medium mb-2">🔴 AI Recording Active</div>
+                <div className="text-xs text-gray-500">Audio being analyzed in real-time</div>
+              </div>
+            )}
+            <button
+              onClick={handleStopCall}
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              🛑 End Call & Stop Recording
+            </button>
+          </div>
         </div>
         {transcriptionStatus && (
           <div className="text-center p-2 bg-gray-100 rounded">
